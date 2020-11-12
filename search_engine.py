@@ -12,13 +12,33 @@ def run_engine():
     :return:
     """
     number_of_documents = 0
-
     config = ConfigClass()
-    r = ReadFile(corpus_path=config.get__corpusPath())
+    corpus_path = config.get__corpusPath()
+    r = ReadFile(corpus_path)
     p = Parse()
     indexer = Indexer(config)
 
-    documents_list = r.read_file(file_name='sample3.parquet')
+    #reading per folder
+    """r.create_files_name_list()
+    files_list = [] #every index contains all tweets per folder
+    for file_name in r.dates_list:
+        tweets_per_date = r.read_file(file_name)
+        files_list.append(tweets_per_date)
+    print(len(files_list))
+
+    # Iterate over every document in the file
+    for folder_list in files_list:
+        for idx, tweet in enumerate(folder_list):
+            # parse the document
+            parsed_document = p.parse_doc(tweet)
+            number_of_documents += 1
+            # index the document data
+            indexer.add_new_doc(parsed_document)
+        #print(number_of_documents)
+    print('Finished parsing and indexing. Starting to export files')"""
+
+    #read only one folder
+    documents_list = r.read_file(file_name='')
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
         # parse the document

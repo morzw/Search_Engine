@@ -1,3 +1,5 @@
+import re
+
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from document import Document
@@ -7,6 +9,10 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
+        #self.stop_words.append('RT')
+        #newStopWords = ['RT', ':']
+        #self.stop_words.extend(newStopWords)
+        #self.stop_words.remove('the')
 
     def parse_sentence(self, text):
         """
@@ -14,8 +20,69 @@ class Parse:
         :param text:
         :return:
         """
+        print(text)
         text_tokens = word_tokenize(text)
+
+        # TODO: find emails rejex
+        if "@" in text_tokens:  # find TAGS
+            index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
+            counter = 0
+            for index in index_list1:
+                if index + 1 < len(text_tokens):
+                    if text_tokens[index + 1] != '@':
+                        new_term = text_tokens[index] + text_tokens[index + 1]
+                        text_tokens.append(new_term)
+                        counter += 1
+            for sign in range(counter):  # deletes all '@' and the word after it from list
+                rmv_index = text_tokens.index('@')
+                if rmv_index + 1 < len(text_tokens):
+                    if text_tokens[rmv_index + 1] != '@':
+                        del text_tokens[rmv_index + 1]
+                    else:
+                        del text_tokens[rmv_index + 1]
+                        del text_tokens[rmv_index + 2]
+                text_tokens.remove('@')
+        # TODO: ask about number in words
+        if "%" or "percent" or "percentage" in text_tokens:  # find PERCENTAGES
+            index_list2 = [n for n, x in enumerate(text_tokens) if x == '%' or x == 'percent' or x == "percentage"]
+            for index in index_list2:
+                if index - 1 >= 0:
+                    new_term = text_tokens[index - 1] + '%'
+                    text_tokens.append(new_term)
+            for sign in range(len(index_list2)):  # deletes all '%' from list
+                if "%" in text_tokens:
+                    text_tokens.remove('%')
+        # TODO: #whereIsKCR combined
+        if "#" in text_tokens:  # find HASHTAGS
+            index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
+            for index in index_list3:
+                if index + 1 < len(text_tokens):
+                    if text_tokens[index + 1] != '#':
+                        if text_tokens[index + 1].find('') == -1:  # not contains ''
+                            new_term = text_tokens[index] + text_tokens[index + 1]
+                            text_tokens.append(new_term)
+            for sign in range(len(index_list3)):  # deletes all '#' and the word after it from list
+                rmv_index = text_tokens.index('#')
+                if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#':
+                    word_val = text_tokens[rmv_index + 1]
+                    if not word_val.isupper() and not word_val.islower():  # split uppercase
+                        list_of_words = re.findall('[A-Z][^A-Z]*', word_val)
+                        for word in list_of_words:
+                            text_tokens.append(word)
+                    if word_val.find('') != -1:  # split '_'
+                        list_of_words = word_val.split('_')
+                        new_word = "#"
+                        for word in list_of_words:
+                            new_word += word
+                            text_tokens.append(word)  # appends each word
+                        text_tokens.append(new_word)  # appends #word
+                    if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1):
+                        del text_tokens[rmv_index + 1]
+                text_tokens.remove('#')
+
+        print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
+        print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
     def parse_doc(self, doc_as_list):
@@ -33,7 +100,8 @@ class Parse:
         quote_text = doc_as_list[6]
         quote_url = doc_as_list[7]
         term_dict = {}
-        tokenized_text = self.parse_sentence(full_text)
+        #tokenized_text = self.parse_sentence(full_text)
+        tokenized_text = self.parse_sentence(url)
 
         doc_length = len(tokenized_text)  # after text operations.
 
