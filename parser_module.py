@@ -45,13 +45,25 @@ class Parse:
         # TODO: ask about number in words
         if "%" or "percent" or "percentage" in text_tokens:  # find PERCENTAGES
             index_list2 = [n for n, x in enumerate(text_tokens) if x == '%' or x == 'percent' or x == "percentage"]
+            counter2 = 0
             for index in index_list2:
                 if index - 1 >= 0:
-                    new_term = text_tokens[index - 1] + '%'
-                    text_tokens.append(new_term)
-            for sign in range(len(index_list2)):  # deletes all '%' from list
-                if "%" in text_tokens:
+                    #TODO: what before % if text_tokens[index - 1]:
+                    if not re.search('[a-zA-Z]', text_tokens[index - 1]):
+                        new_term = text_tokens[index - 1] + '%'
+                        text_tokens.append(new_term)
+                    if text_tokens[index] == '%':
+                        counter2 += 1
+            for sign in range(counter2):  # deletes all '%' and the word after it from list
+                rmv_index = text_tokens.index('%')
+                if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] == '%': #if %%
+                    del text_tokens[rmv_index + 1]
+                    counter2 -= 1
+                if rmv_index - 1 >= 0 and not re.search('[a-zA-Z]', text_tokens[rmv_index - 1]): #is number
+                    del text_tokens[rmv_index - 1]
                     text_tokens.remove('%')
+                """if rmv_index - 1 >= 0 and re.search('[a-zA-Z]', text_tokens[rmv_index - 1]): #is word
+                    continue"""
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
             index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
@@ -79,11 +91,32 @@ class Parse:
                     if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1):
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
+        #TODO: NUMBERS
+        numbers = []
+        for item in text_tokens:
+            """match = re.findall("([0-9]+[,.]+[0-9]+)", item)
+            print(match)"""
+            if item.isnumeric() or item.isdigit() or re.findall("([0-9]+[,.]+[0-9]+)", item) and item.find('%') == -1:
+                numbers.append(item)
+
+        print(numbers)
 
         print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
+
+    def parse_url(self, url):
+        url_tokens = re.split('[} |:// |":" |/ |: |, |" |{ |? |= |-]', url)
+        website = [s for s in url_tokens if "www" in s]
+        for web in website:
+            new_web = web.split("www.")
+            url_tokens.extend(new_web)
+            url_tokens.append("www")
+            url_tokens.remove(web)
+        while "" in url_tokens:  #removes spaces
+            url_tokens.remove("")
+        return url_tokens
 
     def parse_doc(self, doc_as_list):
         """
@@ -100,8 +133,22 @@ class Parse:
         quote_text = doc_as_list[6]
         quote_url = doc_as_list[7]
         term_dict = {}
-        #tokenized_text = self.parse_sentence(full_text)
-        tokenized_text = self.parse_sentence(url)
+
+        #tokenized_text = ''
+
+        #  url tokenized
+        #tokenized_url = self.parse_url(url)
+        tokenized_url = ''
+        print(tokenized_url)
+        if len(tokenized_url) != 0:
+            for term in tokenized_url:
+                if term not in term_dict.keys():
+                    term_dict[term] = 1
+                else:
+                    term_dict[term] += 1
+
+        #  text tokenized
+        tokenized_text = self.parse_sentence(full_text)
 
         doc_length = len(tokenized_text)  # after text operations.
 
