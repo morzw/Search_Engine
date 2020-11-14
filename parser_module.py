@@ -1,4 +1,5 @@
 import re
+import string
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -23,9 +24,23 @@ class Parse:
         print(text)
         text_tokens = word_tokenize(text)
 
+        punctuations = '''!()-[]{};:'"\,<>./?^&*_~|'''  #removes relevant punctuations and http and //short url
+        for word in text_tokens:
+            if word in punctuations:
+                i = text_tokens.index(word)
+                text_tokens[i] = " "
+            elif word == "http" or word == "https" or word == "http..." or word == "https...":
+                i2 = text_tokens.index(word)
+                text_tokens[i2] = " "
+            elif len(word) > 1 and word[0] == '/' and word[1] == '/':
+                i3 = text_tokens.index(word)
+                text_tokens[i3] = " "
+        text_tokens[:] = [x for x in text_tokens if x != " "]
+
         # TODO: find emails rejex
         if "@" in text_tokens:  # find TAGS
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
+            print("list-" ,len(index_list1))
             counter = 0
             for index in index_list1:
                 if index + 1 < len(text_tokens):
@@ -33,6 +48,7 @@ class Parse:
                         new_term = text_tokens[index] + text_tokens[index + 1]
                         text_tokens.append(new_term)
                         counter += 1
+            print("count-" ,counter)
             for sign in range(counter):  # deletes all '@' and the word after it from list
                 rmv_index = text_tokens.index('@')
                 if rmv_index + 1 < len(text_tokens):
@@ -40,7 +56,7 @@ class Parse:
                         del text_tokens[rmv_index + 1]
                     else:
                         del text_tokens[rmv_index + 1]
-                        del text_tokens[rmv_index + 2]
+                        del text_tokens[rmv_index + 1]
                 text_tokens.remove('@')
         # TODO: ask about number in words
         if "%" or "percent" or "percentage" in text_tokens:  # find PERCENTAGES
@@ -91,15 +107,76 @@ class Parse:
                     if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1):
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
-        #TODO: NUMBERS
+        #TODO: round num
+        def parse_numbers(str):
+            fixed_str = re.sub("[^\d\.]", "", str)
+            num = float(fixed_str)
+            magnitude = 0
+            while abs(num) >= 1000:
+                magnitude += 1
+                num /= 1000.0
+            new_num = '{}{}'.format('{:.3f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T', 'Q', 'Q', 'SAF'][magnitude])
+            return new_num
+
         numbers = []
         for item in text_tokens:
-            """match = re.findall("([0-9]+[,.]+[0-9]+)", item)
-            print(match)"""
-            if item.isnumeric() or item.isdigit() or re.findall("([0-9]+[,.]+[0-9]+)", item) and item.find('%') == -1:
-                numbers.append(item)
-
+            if item.isnumeric() or item.isdigit() or item.isdecimal() or re.findall("([0-9]+[,.]+[0-9]+)", item):
+                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find('%') == -1 and item.find('¢') == -1:
+                    if item.find(',') == -1:
+                        numbers.append(item)
+                    elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
+                        numbers.append(item)
         print(numbers)
+        for num in numbers:
+            occur = num.count('.')
+            if occur < 2:  #not a date
+                rmv_index = text_tokens.index(num)
+                to_append = True
+                no_text = True
+                if rmv_index + 1 < len(text_tokens): #yes text
+                    if text_tokens[rmv_index + 1] == "million" or text_tokens[rmv_index + 1] == "Million" or text_tokens[rmv_index + 1] == "M" or text_tokens[rmv_index + 1] == "m":
+                        if len(num) < 6:
+                            new_num = parse_numbers(str(float(num)*1000000))
+                        else:
+                            new_num = parse_numbers(num)
+                        no_text = False
+                    if text_tokens[rmv_index + 1] == "billion" or text_tokens[rmv_index + 1] == "Billion" or text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b":
+                        if len(num) < 9:
+                            new_num = parse_numbers(str(float(num)*1000000000))
+                        else:
+                            new_num = parse_numbers(num)
+                        no_text = False
+                    if text_tokens[rmv_index + 1] == "thousand" or text_tokens[rmv_index + 1] == "Thousand" or text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k":
+                        if len(num) < 4:
+                            new_num = parse_numbers(str(float(num)*1000))
+                        else:
+                            new_num = parse_numbers(num)
+                        no_text = False
+                if rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$': #yes $
+                    if no_text:
+                        if len(num) > 3:
+                            text_tokens.append("$"+parse_numbers(num))
+                        else:
+                            text_tokens.append("$" + num)
+                    else:
+                        text_tokens.append("$" + new_num)
+                    to_append = False
+                """if no_text:
+                    if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] == '$':
+                        if len(num) > 3:
+                            text_tokens.append("$"+parse_numbers(num))
+                        else:
+                            text_tokens.append("$" + num)
+                        to_append = False
+                elif rmv_index + 2 < len(text_tokens) and text_tokens[rmv_index + 2] == '$':
+                        text_tokens.append("$" + new_num)
+                        to_append = False"""
+                if to_append:  #no $
+                    if no_text:
+                        if len(num) > 3:
+                            text_tokens.append(parse_numbers(num))
+                    else:
+                        text_tokens.append(new_num)
 
         print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
