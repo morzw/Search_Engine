@@ -24,7 +24,7 @@ class Parse:
         print(text)
         text_tokens = word_tokenize(text)
 
-        punctuations = '''!()-[]{};:'"\,<>./?^&*_~|'''  #removes relevant punctuations and http and //short url
+        punctuations = '''!()-[]{};:'"\,<>./?^&*_~|"'''  #removes relevant punctuations and http and //short url
         for word in text_tokens:
             if word in punctuations:
                 i = text_tokens.index(word)
@@ -57,8 +57,8 @@ class Parse:
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('@')
         # TODO: ask about number in words
-        if "%" or "percent" or "percentage" in text_tokens:  # find PERCENTAGES
-            index_list2 = [n for n, x in enumerate(text_tokens) if x == '%' or x == 'percent' or x == "percentage"]
+        if "%" or "percent" or "Percent" or "percentage" or "Percentage" in text_tokens:  # find PERCENTAGES
+            index_list2 = [n for n, x in enumerate(text_tokens) if x == '%' or x == 'percent' or x == "percentage" or x == 'Percent' or x == "Percentage"]
             counter2 = 0
             for index in index_list2:
                 if index - 1 >= 0:
@@ -68,34 +68,34 @@ class Parse:
                         text_tokens.append(new_term)
                     if text_tokens[index] == '%':
                         counter2 += 1
-            for sign in range(counter2):  # deletes all '%' and the word after it from list
+            while counter2 > 0:  # deletes all '%' and the word after it from list
                 rmv_index = text_tokens.index('%')
                 if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] == '%': #if %%
                     del text_tokens[rmv_index + 1]
                     counter2 -= 1
                 if rmv_index - 1 >= 0 and not re.search('[a-zA-Z]', text_tokens[rmv_index - 1]): #is number
+                    del text_tokens[rmv_index]
                     del text_tokens[rmv_index - 1]
-                    text_tokens.remove('%')
-                """if rmv_index - 1 >= 0 and re.search('[a-zA-Z]', text_tokens[rmv_index - 1]): #is word
-                    continue"""
+                counter2 -= 1
+
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
             index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
             for index in index_list3:
                 if index + 1 < len(text_tokens):
                     if text_tokens[index + 1] != '#':
-                        if text_tokens[index + 1].find('') == -1:  # not contains ''
+                        if text_tokens[index].find('_') == -1:  # not contains '_'
                             new_term = text_tokens[index] + text_tokens[index + 1]
                             text_tokens.append(new_term)
             for sign in range(len(index_list3)):  # deletes all '#' and the word after it from list
                 rmv_index = text_tokens.index('#')
                 if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#':
                     word_val = text_tokens[rmv_index + 1]
-                    if not word_val.isupper() and not word_val.islower():  # split uppercase
+                    if not word_val.isupper() and not word_val.islower() and word_val.find('_') == -1:  # split uppercase
                         list_of_words = re.findall('[A-Z][^A-Z]*', word_val)
                         for word in list_of_words:
                             text_tokens.append(word)
-                    if word_val.find('') != -1:  # split '_'
+                    if word_val.find('_') != -1:  # split '_'
                         list_of_words = word_val.split('_')
                         new_word = "#"
                         for word in list_of_words:
@@ -117,9 +117,10 @@ class Parse:
             return new_num
 
         numbers = []
-        for item in text_tokens:
-            if item.isnumeric() or item.isdigit() or item.isdecimal() or re.findall("([0-9]+[,.]+[0-9]+)", item):
-                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find('%') == -1 and item.find('¢') == -1 and item.find('~') == -1:
+        for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
+            if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3})?$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
+                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find(
+                        '%') == -1 and item.find('¢') == -1 and item.find('~') == -1 and item.find('+') == -1 and item.find('/') == -1 and item.find("'") == -1:
                     if item.find(',') == -1:
                         numbers.append(item)
                     elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
@@ -127,49 +128,48 @@ class Parse:
         print(numbers)
         for num in numbers:
             occur = num.count('.')
-            if occur < 2:  #not a date
+            if occur < 2:  # not a date
                 rmv_index = text_tokens.index(num)
                 to_append = True
                 no_text = True
-                if rmv_index + 1 < len(text_tokens): #yes text
-                    if text_tokens[rmv_index + 1] == "million" or text_tokens[rmv_index + 1] == "Million" or text_tokens[rmv_index + 1] == "M" or text_tokens[rmv_index + 1] == "m":
+                if rmv_index + 1 < len(text_tokens):  # yes text
+                    if text_tokens[rmv_index + 1] == "million" or text_tokens[rmv_index + 1] == "Million" or \
+                            text_tokens[rmv_index + 1] == "M" or text_tokens[rmv_index + 1] == "m" or text_tokens[rmv_index + 1] == "MILLION":
                         if len(num) < 6:
-                            new_num = parse_numbers(str(float(num)*1000000))
+                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
+                            new_num = parse_numbers(str(float(fixed_num) * 1000000))
                         else:
                             new_num = parse_numbers(num)
                         no_text = False
-                    if text_tokens[rmv_index + 1] == "billion" or text_tokens[rmv_index + 1] == "Billion" or text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b":
+                    if text_tokens[rmv_index + 1] == "billion" or text_tokens[rmv_index + 1] == "Billion" or \
+                            text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b" or text_tokens[rmv_index + 1] == "BILLION":
                         if len(num) < 9:
-                            new_num = parse_numbers(str(float(num)*1000000000))
+                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
+                            new_num = parse_numbers(str(float(fixed_num) * 1000000000))
                         else:
                             new_num = parse_numbers(num)
                         no_text = False
-                    if text_tokens[rmv_index + 1] == "thousand" or text_tokens[rmv_index + 1] == "Thousand" or text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k":
+                    if text_tokens[rmv_index + 1] == "thousand" or text_tokens[rmv_index + 1] == "Thousand" or \
+                            text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k" or text_tokens[rmv_index + 1] == "THOUSAND":
                         if len(num) < 4:
-                            new_num = parse_numbers(str(float(num)*1000))
+                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
+                            new_num = parse_numbers(str(float(fixed_num) * 1000))
                         else:
                             new_num = parse_numbers(num)
                         no_text = False
-                if rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$': #yes $
+                    if not no_text:
+                        text_tokens[rmv_index + 1]
+                if (rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$') or (rmv_index + 1 < len(text_tokens) and
+                                                                                  (text_tokens[rmv_index + 1] == "dollar" or text_tokens[rmv_index + 1] == "dollars")): #yes $
                     if no_text:
                         if len(num) > 3:
-                            text_tokens.append("$"+parse_numbers(num))
+                            text_tokens.append("$" + parse_numbers(num))
                         else:
                             text_tokens.append("$" + num)
                     else:
                         text_tokens.append("$" + new_num)
                     to_append = False
-                """if no_text:
-                    if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] == '$':
-                        if len(num) > 3:
-                            text_tokens.append("$"+parse_numbers(num))
-                        else:
-                            text_tokens.append("$" + num)
-                        to_append = False
-                elif rmv_index + 2 < len(text_tokens) and text_tokens[rmv_index + 2] == '$':
-                        text_tokens.append("$" + new_num)
-                        to_append = False"""
-                if to_append:  #no $
+                if to_append:  # no $
                     if no_text:
                         if len(num) > 3:
                             text_tokens.append(parse_numbers(num))
