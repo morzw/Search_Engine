@@ -40,7 +40,6 @@ class Parse:
         # TODO: find emails rejex
         if "@" in text_tokens:  # find TAGS
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
-            print("list-" ,len(index_list1))
             counter = 0
             for index in index_list1:
                 if index + 1 < len(text_tokens):
@@ -48,7 +47,6 @@ class Parse:
                         new_term = text_tokens[index] + text_tokens[index + 1]
                         text_tokens.append(new_term)
                         counter += 1
-            print("count-" ,counter)
             for sign in range(counter):  # deletes all '@' and the word after it from list
                 rmv_index = text_tokens.index('@')
                 if rmv_index + 1 < len(text_tokens):
@@ -121,7 +119,7 @@ class Parse:
         numbers = []
         for item in text_tokens:
             if item.isnumeric() or item.isdigit() or item.isdecimal() or re.findall("([0-9]+[,.]+[0-9]+)", item):
-                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find('%') == -1 and item.find('¢') == -1:
+                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find('%') == -1 and item.find('¢') == -1 and item.find('~') == -1:
                     if item.find(',') == -1:
                         numbers.append(item)
                     elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
