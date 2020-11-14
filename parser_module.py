@@ -102,7 +102,7 @@ class Parse:
                             new_word += word
                             text_tokens.append(word)  # appends each word
                         text_tokens.append(new_word)  # appends #word
-                    if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1):
+                    if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1): #TODO: delet #fuck_you
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
         #TODO: round num
@@ -141,6 +141,8 @@ class Parse:
                         else:
                             new_num = parse_numbers(num)
                         no_text = False
+                        text_tokens[rmv_index + 1] = " "  # remove from list
+                        text_tokens[rmv_index] = " "
                     if text_tokens[rmv_index + 1] == "billion" or text_tokens[rmv_index + 1] == "Billion" or \
                             text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b" or text_tokens[rmv_index + 1] == "BILLION":
                         if len(num) < 9:
@@ -149,6 +151,8 @@ class Parse:
                         else:
                             new_num = parse_numbers(num)
                         no_text = False
+                        text_tokens[rmv_index + 1] = " "  # remove from list
+                        text_tokens[rmv_index] = " "
                     if text_tokens[rmv_index + 1] == "thousand" or text_tokens[rmv_index + 1] == "Thousand" or \
                             text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k" or text_tokens[rmv_index + 1] == "THOUSAND":
                         if len(num) < 4:
@@ -157,6 +161,8 @@ class Parse:
                         else:
                             new_num = parse_numbers(num)
                         no_text = False
+                        text_tokens[rmv_index + 1] = " "  # remove from list
+                        text_tokens[rmv_index] = " "
                     if not no_text:
                         text_tokens[rmv_index + 1]
                 if (rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$') or (rmv_index + 1 < len(text_tokens) and
