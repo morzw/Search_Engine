@@ -118,21 +118,22 @@ class Parse:
         self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
 
         punctuations = '''!(-+—[]{};:'"\,)<>,./?^&*_’~|"”“'''  # removes relevant punctuations and http and //short url
+
         for word in text_tokens:
             to_delete = False
+            #word = ''.join([i if ord(i) < 128 else ' ' for i in word])
             if len(word) > 1 and word.find('-') != -1:  #  contains '-'
                 text_tokens.extend(word.split('-'))
                 text_tokens.remove(word)
                 to_delete = True
-
-            if len(word) > 1 and word.find('/') != -1:  # contains '/'
-                if to_delete == False:
-                    text_tokens.extend(word.split('/'))
-                    text_tokens.remove(word)
-                to_delete = True
             if len(word) > 1 and word.find('+') != -1:  #  contains '+'
                 if to_delete == False:
                     text_tokens.extend(word.split('+'))
+                    text_tokens.remove(word)
+                to_delete = True
+            if len(word) > 1 and word.find('/') != -1 and not ( word[0] == '/' and word[1] == '/'):  # contains '/'
+                if to_delete == False:
+                    text_tokens.extend(word.split('/'))
                     text_tokens.remove(word)
                 to_delete = True
             if to_delete == False:
@@ -145,6 +146,7 @@ class Parse:
                 elif len(word) > 1 and word[0] == '/' and word[1] == '/':
                     i3 = text_tokens.index(word)
                     text_tokens[i3] = " "
+
         text_tokens[:] = [x for x in text_tokens if x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and x != "``" and x != "''"]
 
         # TODO: #whereIsKCR combined
