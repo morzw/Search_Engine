@@ -124,6 +124,7 @@ class Parse:
                 text_tokens.extend(word.split('-'))
                 text_tokens.remove(word)
                 to_delete = True
+
             if len(word) > 1 and word.find('/') != -1:  # contains '/'
                 if to_delete == False:
                     text_tokens.extend(word.split('/'))
