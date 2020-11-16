@@ -8,6 +8,9 @@ from document import Document
 
 class Parse:
 
+    term_dict = {}
+    capital_letter_dict = {}
+
     def __init__(self):
         self.stop_words = stopwords.words('english')
         #self.stop_words.append('RT')
@@ -15,7 +18,53 @@ class Parse:
         #self.stop_words.extend(newStopWords)
         #self.stop_words.remove('the')
 
-    def parse_sentence(self, text):
+    def parse_term(self, tokenized_text, tweet_id):
+        #for word in tokenized_text:
+        counter = 0
+        while counter < len(tokenized_text):
+            len_term = 1
+            word = tokenized_text[counter]
+            if len(word) > 1 and word.islower():  #if found word lower in the corpus
+                word_upper = word.upper()
+                if word_upper in self.capital_letter_dict:
+                    self.capital_letter_dict[word_upper][1] = False  #to remove afterwords
+            if tokenized_text.index(word) + 1 < len(tokenized_text) and len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper():
+                term = word
+                index = tokenized_text.index(word) + 1
+                if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
+                    index][0].isupper():
+                    new_word = term[0] + term[1:].lower()
+                    if new_word in self.term_dict:
+                        self.term_dict[new_word].append(tweet_id)
+                    else:
+                        self.term_dict[new_word] = [tweet_id]
+                while index < len(tokenized_text):
+                    if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
+                        new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
+                        if new_word2 in self.term_dict:
+                            self.term_dict[new_word2].append(tweet_id)
+                        else:
+                            self.term_dict[new_word2] = [tweet_id]
+                        term += " " + new_word2
+                        index += 1
+                        len_term += 1
+                    else:
+                        break
+                if len_term == 1:  #appends to capital letter dict - key + num of tweets
+                    if term.upper() in self.capital_letter_dict:
+                        self.capital_letter_dict[term.upper()][0] += 1
+                    else:
+                        self.capital_letter_dict[term.upper()] = [1, True]
+                elif len_term > 1: #appends to term dict - key + tweet id
+                    if term in self.term_dict:
+                        self.term_dict[term].append(tweet_id)
+                    else:
+                        self.term_dict[term] = [tweet_id]
+            counter += len_term
+        print(self.capital_letter_dict)
+        print(self.term_dict)
+
+    def parse_sentence(self, text, tweet_id):
         """
         This function tokenize, remove stop words and apply lower case for every word within the text
         :param text:
@@ -23,6 +72,7 @@ class Parse:
         """
         print(text)
         text_tokens = word_tokenize(text)
+        self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
 
         punctuations = '''!()-[]{};:'"\,<>./?^&*_~|"'''  #removes relevant punctuations and http and //short url
         for word in text_tokens:
@@ -105,17 +155,7 @@ class Parse:
                     if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1): #TODO: delet #fuck_you
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
-        #TODO: round num
-        def parse_numbers(str):
-            fixed_str = re.sub("[^\d\.]", "", str)
-            num = float(fixed_str)
-            magnitude = 0
-            while abs(num) >= 1000:
-                magnitude += 1
-                num /= 1000.0
-            new_num = '{}{}'.format('{:.3f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T', 'Q', 'Q', 'SAF'][magnitude])
-            return new_num
-
+        #NUMBERS
         numbers = []
         for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
             if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3})?$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
@@ -137,9 +177,9 @@ class Parse:
                             text_tokens[rmv_index + 1] == "M" or text_tokens[rmv_index + 1] == "m" or text_tokens[rmv_index + 1] == "MILLION":
                         if len(num) < 6:
                             fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
-                            new_num = parse_numbers(str(float(fixed_num) * 1000000))
+                            new_num = self.parse_numbers(str(float(fixed_num) * 1000000))
                         else:
-                            new_num = parse_numbers(num)
+                            new_num = self.parse_numbers(num)
                         no_text = False
                         text_tokens[rmv_index + 1] = " "  # remove from list
                         text_tokens[rmv_index] = " "
@@ -147,9 +187,9 @@ class Parse:
                             text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b" or text_tokens[rmv_index + 1] == "BILLION":
                         if len(num) < 9:
                             fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
-                            new_num = parse_numbers(str(float(fixed_num) * 1000000000))
+                            new_num = self.parse_numbers(str(float(fixed_num) * 1000000000))
                         else:
-                            new_num = parse_numbers(num)
+                            new_num = self.parse_numbers(num)
                         no_text = False
                         text_tokens[rmv_index + 1] = " "  # remove from list
                         text_tokens[rmv_index] = " "
@@ -157,9 +197,9 @@ class Parse:
                             text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k" or text_tokens[rmv_index + 1] == "THOUSAND":
                         if len(num) < 4:
                             fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
-                            new_num = parse_numbers(str(float(fixed_num) * 1000))
+                            new_num = self.parse_numbers(str(float(fixed_num) * 1000))
                         else:
-                            new_num = parse_numbers(num)
+                            new_num = self.parse_numbers(num)
                         no_text = False
                         text_tokens[rmv_index + 1] = " "  # remove from list
                         text_tokens[rmv_index] = " "
@@ -169,7 +209,7 @@ class Parse:
                                                                                   (text_tokens[rmv_index + 1] == "dollar" or text_tokens[rmv_index + 1] == "dollars")): #yes $
                     if no_text:
                         if len(num) > 3:
-                            text_tokens.append("$" + parse_numbers(num))
+                            text_tokens.append("$" + self.parse_numbers(num))
                         else:
                             text_tokens.append("$" + num)
                     else:
@@ -178,7 +218,7 @@ class Parse:
                 if to_append:  # no $
                     if no_text:
                         if len(num) > 3:
-                            text_tokens.append(parse_numbers(num))
+                            text_tokens.append(self.parse_numbers(num))
                     else:
                         text_tokens.append(new_num)
 
@@ -198,6 +238,18 @@ class Parse:
         while "" in url_tokens:  #removes spaces
             url_tokens.remove("")
         return url_tokens
+
+    # TODO: round num
+    def parse_numbers(self, str):
+        fixed_str = re.sub("[^\d\.]", "", str)
+        num = float(fixed_str)
+        magnitude = 0
+        while abs(num) >= 1000:
+            magnitude += 1
+            num /= 1000.0
+        new_num = '{}{}'.format('{:.3f}'.format(num).rstrip('0').rstrip('.'),
+                                ['', 'K', 'M', 'B', 'T', 'Q', 'Q', 'SAF'][magnitude])
+        return new_num
 
     def parse_doc(self, doc_as_list):
         """
@@ -229,7 +281,7 @@ class Parse:
                     term_dict[term] += 1
 
         #  text tokenized
-        tokenized_text = self.parse_sentence(full_text)
+        tokenized_text = self.parse_sentence(full_text, tweet_id)
 
         doc_length = len(tokenized_text)  # after text operations.
 
