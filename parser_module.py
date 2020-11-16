@@ -28,28 +28,29 @@ class Parse:
                 word_upper = word.upper()
                 if word_upper in self.capital_letter_dict:
                     self.capital_letter_dict[word_upper][1] = False  #to remove afterwords
-            if tokenized_text.index(word) + 1 < len(tokenized_text) and len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper():
+            if len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper() and counter-1 >= 0 and tokenized_text[counter-1] != '#': # upper first char and not #
                 term = word
-                index = tokenized_text.index(word) + 1
-                if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
-                    index][0].isupper():
-                    new_word = term[0] + term[1:].lower()
-                    if new_word in self.term_dict:
-                        self.term_dict[new_word].append(tweet_id)
-                    else:
-                        self.term_dict[new_word] = [tweet_id]
-                while index < len(tokenized_text):
-                    if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
-                        new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
-                        if new_word2 in self.term_dict:
-                            self.term_dict[new_word2].append(tweet_id)
+                if tokenized_text.index(word) + 1 < len(tokenized_text):
+                    index = tokenized_text.index(word) + 1
+                    if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
+                        index][0].isupper(): # next word is also upper first char
+                        new_word = term[0] + term[1:].lower()
+                        if new_word in self.term_dict: # enter first word of term
+                            self.term_dict[new_word].append(tweet_id)
                         else:
-                            self.term_dict[new_word2] = [tweet_id]
-                        term += " " + new_word2
-                        index += 1
-                        len_term += 1
-                    else:
-                        break
+                            self.term_dict[new_word] = [tweet_id]
+                    while index < len(tokenized_text): # find all term
+                        if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
+                            new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
+                            if new_word2 in self.term_dict: #enter each word in term
+                                self.term_dict[new_word2].append(tweet_id)
+                            else:
+                                self.term_dict[new_word2] = [tweet_id]
+                            term += " " + new_word2
+                            index += 1
+                            len_term += 1
+                        else:
+                            break
                 if len_term == 1:  #appends to capital letter dict - key + num of tweets
                     if term.upper() in self.capital_letter_dict:
                         self.capital_letter_dict[term.upper()][0] += 1
@@ -61,8 +62,8 @@ class Parse:
                     else:
                         self.term_dict[term] = [tweet_id]
             counter += len_term
-        print(self.capital_letter_dict)
-        print(self.term_dict)
+        #print(self.capital_letter_dict)
+        #print(self.term_dict)
 
     def parse_sentence(self, text, tweet_id):
         """
@@ -72,20 +73,6 @@ class Parse:
         """
         print(text)
         text_tokens = word_tokenize(text)
-        self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
-
-        punctuations = '''!()-[]{};:'"\,<>./?^&*_~|"'''  #removes relevant punctuations and http and //short url
-        for word in text_tokens:
-            if word in punctuations:
-                i = text_tokens.index(word)
-                text_tokens[i] = " "
-            elif word == "http" or word == "https" or word == "http..." or word == "https...":
-                i2 = text_tokens.index(word)
-                text_tokens[i2] = " "
-            elif len(word) > 1 and word[0] == '/' and word[1] == '/':
-                i3 = text_tokens.index(word)
-                text_tokens[i3] = " "
-        text_tokens[:] = [x for x in text_tokens if x != " "]
 
         # TODO: find emails rejex
         if "@" in text_tokens:  # find TAGS
@@ -128,6 +115,21 @@ class Parse:
                     del text_tokens[rmv_index - 1]
                 counter2 -= 1
 
+        self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
+
+        punctuations = '''!()-[]{};:'"\,<>./?^&*_’~|"”'''  # removes relevant punctuations and http and //short url
+        for word in text_tokens:
+            if word in punctuations:
+                i = text_tokens.index(word)
+                text_tokens[i] = " "
+            elif word == "http" or word == "https" or word == "http..." or word == "https..." or word == "RT" or word == "rt":
+                i2 = text_tokens.index(word)
+                text_tokens[i2] = " "
+            elif len(word) > 1 and word[0] == '/' and word[1] == '/':
+                i3 = text_tokens.index(word)
+                text_tokens[i3] = " "
+        text_tokens[:] = [x for x in text_tokens if x != " "]
+
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
             index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
@@ -155,6 +157,7 @@ class Parse:
                     if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1): #TODO: delet #fuck_you
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
+
         #NUMBERS
         numbers = []
         for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
@@ -205,15 +208,17 @@ class Parse:
                         text_tokens[rmv_index] = " "
                     if not no_text:
                         text_tokens[rmv_index + 1]
-                if (rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$') or (rmv_index + 1 < len(text_tokens) and
-                                                                                  (text_tokens[rmv_index + 1] == "dollar" or text_tokens[rmv_index + 1] == "dollars")): #yes $
+                if (rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$'): #yes $
                     if no_text:
                         if len(num) > 3:
                             text_tokens.append("$" + self.parse_numbers(num))
                         else:
                             text_tokens.append("$" + num)
+                        text_tokens[rmv_index] = " "  # remove $ from list
+                        text_tokens[rmv_index - 1] = " "
                     else:
                         text_tokens.append("$" + new_num)
+                        text_tokens[rmv_index-1] = " "  # remove $ from list
                     to_append = False
                 if to_append:  # no $
                     if no_text:
