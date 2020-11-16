@@ -74,7 +74,7 @@ class Parse:
         print(text)
         text_tokens = word_tokenize(text)
 
-        # TODO: find emails rejex
+        # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
             counter = 0
@@ -117,18 +117,34 @@ class Parse:
 
         self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
 
-        punctuations = '''!()-[]{};:'"\,<>./?^&*_’~|"”'''  # removes relevant punctuations and http and //short url
+        punctuations = '''!(-+—[]{};:'"\,)<>,./?^&*_’~|"”“'''  # removes relevant punctuations and http and //short url
         for word in text_tokens:
-            if word in punctuations:
-                i = text_tokens.index(word)
-                text_tokens[i] = " "
-            elif word == "http" or word == "https" or word == "http..." or word == "https..." or word == "RT" or word == "rt":
-                i2 = text_tokens.index(word)
-                text_tokens[i2] = " "
-            elif len(word) > 1 and word[0] == '/' and word[1] == '/':
-                i3 = text_tokens.index(word)
-                text_tokens[i3] = " "
-        text_tokens[:] = [x for x in text_tokens if x != " "]
+            to_delete = False
+            if len(word) > 1 and word.find('-') != -1:  #  contains '-'
+                text_tokens.extend(word.split('-'))
+                text_tokens.remove(word)
+                to_delete = True
+            if len(word) > 1 and word.find('/') != -1:  # contains '/'
+                if to_delete == False:
+                    text_tokens.extend(word.split('/'))
+                    text_tokens.remove(word)
+                to_delete = True
+            if len(word) > 1 and word.find('+') != -1:  #  contains '+'
+                if to_delete == False:
+                    text_tokens.extend(word.split('+'))
+                    text_tokens.remove(word)
+                to_delete = True
+            if to_delete == False:
+                if word in punctuations:
+                    i = text_tokens.index(word)
+                    text_tokens[i] = " "
+                elif word == "http" or word == "https" or word == "http..." or word == "https..." or word == "RT" or word == "rt":
+                    i2 = text_tokens.index(word)
+                    text_tokens[i2] = " "
+                elif len(word) > 1 and word[0] == '/' and word[1] == '/':
+                    i3 = text_tokens.index(word)
+                    text_tokens[i3] = " "
+        text_tokens[:] = [x for x in text_tokens if x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and x != "``" and x != "''"]
 
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
@@ -136,7 +152,7 @@ class Parse:
             for index in index_list3:
                 if index + 1 < len(text_tokens):
                     if text_tokens[index + 1] != '#':
-                        if text_tokens[index].find('_') == -1:  # not contains '_'
+                        if text_tokens[index + 1].find('_') == -1:  # not contains '_'
                             new_term = text_tokens[index] + text_tokens[index + 1]
                             text_tokens.append(new_term)
             for sign in range(len(index_list3)):  # deletes all '#' and the word after it from list
@@ -154,14 +170,14 @@ class Parse:
                             new_word += word
                             text_tokens.append(word)  # appends each word
                         text_tokens.append(new_word)  # appends #word
-                    if (not word_val.isupper() and not word_val.islower()) or (word_val.find('_') != -1): #TODO: delet #fuck_you
+                    if (not word_val.isupper() and not word_val.islower()) or word_val.islower() or (word_val.find('_') != -1): #TODO: delete #fuck_you
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
 
         #NUMBERS
         numbers = []
         for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
-            if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3})?$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
+            if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3}){0,6}$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
                 if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find(
                         '%') == -1 and item.find('¢') == -1 and item.find('~') == -1 and item.find('+') == -1 and item.find('/') == -1 and item.find("'") == -1:
                     if item.find(',') == -1:
@@ -224,6 +240,7 @@ class Parse:
                     if no_text:
                         if len(num) > 3:
                             text_tokens.append(self.parse_numbers(num))
+                            text_tokens[rmv_index] = " "  # remove num from list
                     else:
                         text_tokens.append(new_num)
 
