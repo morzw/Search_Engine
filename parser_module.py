@@ -24,25 +24,25 @@ class Parse:
         while counter < len(tokenized_text):
             len_term = 1
             word = tokenized_text[counter]
-            if len(word) > 1 and word.islower():  #if found word lower in the corpus
+            if len(word) > 1 and word.islower() and counter-1 >= 0 and tokenized_text[counter-1] != '#':  # if found word lower in the corpus
                 word_upper = word.upper()
                 if word_upper in self.capital_letter_dict:
-                    self.capital_letter_dict[word_upper][1] = False  #to remove afterwords
-            if len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper() and counter-1 >= 0 and tokenized_text[counter-1] != '#': # upper first char and not #
+                    self.capital_letter_dict[word_upper] = False  # to remove afterwords
+            if len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper() and counter-1 >= 0 and tokenized_text[counter-1] != '#':  # upper first char and not #
                 term = word
                 if tokenized_text.index(word) + 1 < len(tokenized_text):
                     index = tokenized_text.index(word) + 1
                     if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
-                        index][0].isupper(): # next word is also upper first char
+                        index][0].isupper():  # next word is also upper first char
                         new_word = term[0] + term[1:].lower()
-                        if new_word in self.term_dict: # enter first word of term
+                        if new_word in self.term_dict:  # enter first word of term
                             self.term_dict[new_word].append(tweet_id)
                         else:
                             self.term_dict[new_word] = [tweet_id]
                     while index < len(tokenized_text): # find all term
                         if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
                             new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
-                            if new_word2 in self.term_dict: #enter each word in term
+                            if new_word2 in self.term_dict:  # enter each word in term
                                 self.term_dict[new_word2].append(tweet_id)
                             else:
                                 self.term_dict[new_word2] = [tweet_id]
@@ -52,18 +52,19 @@ class Parse:
                         else:
                             break
                 if len_term == 1:  #appends to capital letter dict - key + num of tweets
-                    if term.upper() in self.capital_letter_dict:
+                    self.capital_letter_dict[term.upper()] = True
+                    """if term.upper() in self.capital_letter_dict:
                         self.capital_letter_dict[term.upper()][0] += 1
                     else:
-                        self.capital_letter_dict[term.upper()] = [1, True]
+                        self.capital_letter_dict[term.upper()] = True"""
                 elif len_term > 1: #appends to term dict - key + tweet id
                     if term in self.term_dict:
                         self.term_dict[term].append(tweet_id)
                     else:
                         self.term_dict[term] = [tweet_id]
             counter += len_term
-        #print(self.capital_letter_dict)
-        #print(self.term_dict)
+        print(self.capital_letter_dict)
+        print(self.term_dict)
 
     def parse_sentence(self, text, tweet_id):
         """
@@ -155,45 +156,9 @@ class Parse:
             index_count += 1
         text_tokens[:] = [x for x in text_tokens if
                           x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and
-                          x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""]
+                          x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""
+                          and x != "'re"]
 
-        """punctuations = '''!(-+—[]{};:'"\,)<>,./?^&*_’~|="”“'''  # removes relevant punctuations and http and //short url
-
-        for word in text_tokens:
-            to_delete = False
-            #word = ''.join([i if ord(i) < 128 else ' ' for i in word])
-            if len(word) > 1 and word.find('-') != -1:  #  contains '-'
-                text_tokens.extend(word.split('-'))
-                text_tokens.remove(word)
-                to_delete = True
-            if len(word) > 1 and word.find('…') != -1:  #  contains '…'
-                if to_delete == False:
-                    text_tokens.extend(word.split('…'))
-                    text_tokens.remove(word)
-                to_delete = True
-            if len(word) > 1 and word.find('+') != -1:  #  contains '+'
-                if to_delete == False:
-                    text_tokens.extend(word.split('+'))
-                    text_tokens.remove(word)
-                to_delete = True
-            if len(word) > 1 and word.find('/') != -1 and not ( word[0] == '/' and word[1] == '/'):  # contains '/'
-                if to_delete == False:
-                    text_tokens.extend(word.split('/'))
-                    text_tokens.remove(word)
-                to_delete = True
-            if to_delete == False:
-                if word in punctuations:
-                    i = text_tokens.index(word)
-                    text_tokens[i] = " "
-                elif word == "http" or word == "https" or word == "http..." or word == "https..." or word == "RT" or word == "rt":
-                    i2 = text_tokens.index(word)
-                    text_tokens[i2] = " "
-                elif len(word) > 1 and word[0] == '/' and word[1] == '/':
-                    i3 = text_tokens.index(word)
-                    text_tokens[i3] = " "
-
-        text_tokens[:] = [x for x in text_tokens if x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and x != "``" and x != "''"]
-"""
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
             index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
@@ -292,7 +257,7 @@ class Parse:
                     else:
                         text_tokens.append(new_num)
 
-        print(text_tokens)
+        #print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
@@ -337,13 +302,13 @@ class Parse:
         quote_url = doc_as_list[7]
         term_dict = {}
 
-        #tokenized_text = ''
-
         #  url tokenized
+        #print(url)
         #tokenized_url = self.parse_url(url)
         tokenized_url = ''
-        print(tokenized_url)
-        if len(tokenized_url) != 0:
+        #print(tokenized_url)
+
+        if len(tokenized_url) != 0: #TODO: delete short http
             for term in tokenized_url:
                 if term not in term_dict.keys():
                     term_dict[term] = 1
@@ -352,14 +317,15 @@ class Parse:
 
         #  text tokenized
         tokenized_text = self.parse_sentence(full_text, tweet_id)
-
+        #tokenized_text = ''
         doc_length = len(tokenized_text)  # after text operations.
 
         for term in tokenized_text:
-            if term not in term_dict.keys():
-                term_dict[term] = 1
-            else:
-                term_dict[term] += 1
+            if term.isdigit() or len(term) > 1:
+                if term not in term_dict.keys():
+                    term_dict[term] = 1
+                else:
+                    term_dict[term] += 1
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length)
