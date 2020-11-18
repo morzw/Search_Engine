@@ -73,7 +73,7 @@ class Parse:
         :param text:
         :return:
         """
-        #print(text)
+        print(text)
         text_tokens = word_tokenize(text)
         # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
@@ -159,7 +159,7 @@ class Parse:
         text_tokens[:] = [x for x in text_tokens if
                           x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and
                           x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""
-                          and x != "'re"]
+                          and x != "'re" and x != "__"]
 
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
@@ -172,7 +172,10 @@ class Parse:
                             text_tokens.append(new_term)
             for sign in range(len(index_list3)):  # deletes all '#' and the word after it from list
                 rmv_index = text_tokens.index('#')
-                if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#' and text_tokens[rmv_index + 1][0] != '@':
+                if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#'\
+                        and text_tokens[rmv_index + 1][0] != '@':
+                    print(text_tokens)
+                    print(text_tokens[rmv_index + 1][0])
                     word_val = text_tokens[rmv_index + 1]
                     if not word_val.isupper() and not word_val.islower() and word_val.find('_') == -1:  # split uppercase
                         list_of_words = re.findall('[A-Z][^A-Z]*', word_val)
@@ -261,7 +264,7 @@ class Parse:
 
         #print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
-        #print(text_tokens_without_stopwords)
+        print(text_tokens_without_stopwords)
         #print(tweet_id)
         return text_tokens_without_stopwords
 
