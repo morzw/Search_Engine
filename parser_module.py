@@ -32,20 +32,20 @@ class Parse:
                 term = word
                 if tokenized_text.index(word) + 1 < len(tokenized_text):
                     index = tokenized_text.index(word) + 1
-                    if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
+                    """if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
                         index][0].isupper():  # next word is also upper first char
                         new_word = term[0] + term[1:].lower()
                         if new_word in self.term_dict:  # enter first word of term
                             self.term_dict[new_word].append(tweet_id)
                         else:
-                            self.term_dict[new_word] = [tweet_id]
-                    while index < len(tokenized_text): # find all term
+                            self.term_dict[new_word] = [tweet_id]"""
+                    while index < len(tokenized_text):  # find all term
                         if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
                             new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
-                            if new_word2 in self.term_dict:  # enter each word in term
+                            """if new_word2 in self.term_dict:  # enter each word in term
                                 self.term_dict[new_word2].append(tweet_id)
                             else:
-                                self.term_dict[new_word2] = [tweet_id]
+                                self.term_dict[new_word2] = [tweet_id]"""
                             term += " " + new_word2
                             index += 1
                             len_term += 1
@@ -63,8 +63,8 @@ class Parse:
                     else:
                         self.term_dict[term] = [tweet_id]
             counter += len_term
-        print(self.capital_letter_dict)
-        print(self.term_dict)
+        #print(self.capital_letter_dict)
+        #print(self.term_dict)
 
     def parse_sentence(self, text, tweet_id):
         """
@@ -116,6 +116,7 @@ class Parse:
                 counter2 -= 1
 
         self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
+
         punctuations = '''!(-+—[]{};:'"\,)<>,./?^&*_’~|=→"”“'''  # removes relevant punctuations and http and //short url
         index_count = 0
         for word in text_tokens:
@@ -197,7 +198,7 @@ class Parse:
                         numbers.append(item)
                     elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
                         numbers.append(item)
-        print(numbers)
+        #print(numbers)
         for num in numbers:
             occur = num.count('.')
             if occur < 2:  # not a date
@@ -327,6 +328,18 @@ class Parse:
                 else:
                     term_dict[term] += 1
 
-        document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                            quote_url, term_dict, doc_length)
-        return document
+        # find max_tf in each tweet
+        max_tf = 0
+        if len(term_dict) != 0:
+            all_val = term_dict.values()
+            max_tf = max(all_val)
+
+        # find distinct_words
+        distinct_words = 0
+        if len(term_dict) != 0:
+            all_keys = term_dict.keys()
+            distinct_words = len(all_keys)
+
+        tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
+                            quote_url, term_dict, doc_length, max_tf, distinct_words)
+        return tweet

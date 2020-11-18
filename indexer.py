@@ -3,6 +3,7 @@ class Indexer:
     def __init__(self, config):
         self.inverted_idx = {}
         self.postingDict = {}
+        self.tfidfDict = {}
         self.config = config
 
     def add_new_doc(self, document):
@@ -14,6 +15,12 @@ class Indexer:
         """
 
         document_dictionary = document.term_doc_dictionary
+
+        # Update tf-idf dict
+        tweet_id = document.tweet_id
+        self.tfidfDict[tweet_id] = []
+        self.tfidfDict[tweet_id].append((document.max_tf, document.distinct_words))
+
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
@@ -25,6 +32,7 @@ class Indexer:
                     self.inverted_idx[term] += 1
 
                 self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
+
 
             except:
                 print('problem with the following key {}'.format(term[0]))
