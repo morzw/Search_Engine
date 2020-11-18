@@ -6,14 +6,14 @@ class Indexer:
         self.tfidfDict = {}
         self.config = config
 
-    def add_new_doc(self, document):
+    def add_new_doc(self, document, capital_letter_dict):
         """
         This function perform indexing process for a document object.
         Saved information is captures via two dictionaries ('inverted index' and 'posting')
+        :param capital_letter_dict:
         :param document: a document need to be indexed.
         :return: -
         """
-
         document_dictionary = document.term_doc_dictionary
 
         # Update tf-idf dict
@@ -33,6 +33,21 @@ class Indexer:
 
                 self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
 
-
             except:
                 print('problem with the following key {}'.format(term[0]))
+
+        # append all upper terms to dict
+        if len(capital_letter_dict) != 0:
+            for term in capital_letter_dict:
+                if capital_letter_dict[term]:  # if the term is upper is all corpus
+                    if term.lower() in self.inverted_idx:
+                        self.inverted_idx[term] = self.inverted_idx[term.lower()]
+                        del self.inverted_idx[term.lower()]
+        print(self.inverted_idx)
+        print(len(self.inverted_idx))
+
+
+
+
+
+

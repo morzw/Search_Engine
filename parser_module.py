@@ -10,15 +10,16 @@ class Parse:
 
     term_dict = {}
     capital_letter_dict = {}
-
+    finished = False
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        #self.stop_words.append('RT')
-        #newStopWords = ['RT', ':']
-        #self.stop_words.extend(newStopWords)
-        #self.stop_words.remove('the')
 
     def parse_term(self, tokenized_text, tweet_id):
+
+        # END OF CORPUS
+        if tweet_id == "1291687810479591424":
+            self.finished = True
+
         #for word in tokenized_text:
         counter = 0
         while counter < len(tokenized_text):
@@ -342,4 +343,8 @@ class Parse:
 
         tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length, max_tf, distinct_words)
-        return tweet
+
+        if self.finished:
+            return tweet, self.capital_letter_dict
+        else:
+            return tweet, {}

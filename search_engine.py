@@ -42,10 +42,13 @@ def run_engine():
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
         # parse the document
-        parsed_document = p.parse_doc(document)
+        ans = p.parse_doc(document)
+        parsed_document = ans[0]
+        dict = {}
+        dict.update(ans[1])
         number_of_documents += 1
         # index the document data
-        indexer.add_new_doc(parsed_document)
+        indexer.add_new_doc(parsed_document, dict)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
