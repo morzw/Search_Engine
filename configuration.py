@@ -1,6 +1,6 @@
 class ConfigClass:
     def __init__(self):
-        self.corpusPath = 'C:\\הנדסת מערכות מידע\\שנה ג\\סמסטר א\\אחזור מידע\\חלק א\\Data\\Data\\date=07-09-2020'
+        self.corpusPath = 'C:\\הנדסת מערכות מידע\\שנה ג\\סמסטר א\\אחזור מידע\\חלק א\\Data\\Data\\date=08-07-2020'
         self.savedFileMainFolder = ''
         self.saveFilesWithStem = self.savedFileMainFolder + "/WithStem"
         self.saveFilesWithoutStem = self.savedFileMainFolder + "/WithoutStem"

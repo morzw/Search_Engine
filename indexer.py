@@ -48,10 +48,12 @@ class Indexer:
         if len(term_dict) != 0:
             for term in term_dict:
                 if term not in self.inverted_idx:
-                    self.inverted_idx[term] = len(term_dict[term])
+                    if len(term_dict[term]) > 1:
+                        self.inverted_idx[term] = len(term_dict[term])
 
-        #print(self.inverted_idx)
-        #print(len(self.inverted_idx))
+        if len(term_dict) != 0:
+            print(self.inverted_idx)
+            print(len(self.inverted_idx))
 
 
 

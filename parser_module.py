@@ -73,7 +73,7 @@ class Parse:
         :param text:
         :return:
         """
-        print(text)
+        #print(text)
         text_tokens = word_tokenize(text)
         # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
@@ -261,7 +261,8 @@ class Parse:
 
         #print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
-        print(text_tokens_without_stopwords)
+        #print(text_tokens_without_stopwords)
+        #print(tweet_id)
         return text_tokens_without_stopwords
 
     def parse_url(self, url):
