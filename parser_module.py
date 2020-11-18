@@ -345,6 +345,6 @@ class Parse:
                             quote_url, term_dict, doc_length, max_tf, distinct_words)
 
         if self.finished:
-            return tweet, self.capital_letter_dict
+            return tweet, self.capital_letter_dict, self.term_dict
         else:
-            return tweet, {}
+            return tweet, {}, {}

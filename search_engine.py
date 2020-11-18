@@ -44,11 +44,14 @@ def run_engine():
         # parse the document
         ans = p.parse_doc(document)
         parsed_document = ans[0]
-        dict = {}
-        dict.update(ans[1])
+        capital_letter_dict = {}
+        capital_letter_dict.update(ans[1])
+        term_dict = {}
+        term_dict.update(ans[2])
+
         number_of_documents += 1
         # index the document data
-        indexer.add_new_doc(parsed_document, dict)
+        indexer.add_new_doc(parsed_document, capital_letter_dict, term_dict)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
