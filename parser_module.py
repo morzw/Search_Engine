@@ -20,7 +20,7 @@ class Parse:
         if tweet_id == "1291687810479591424":
             self.finished = True
 
-        #for word in tokenized_text:
+        #Term Dict + Capital Letter Dict:
         counter = 0
         while counter < len(tokenized_text):
             len_term = 1
@@ -47,18 +47,25 @@ class Parse:
                                 self.term_dict[new_word2].append(tweet_id)
                             else:
                                 self.term_dict[new_word2] = [tweet_id]"""
+                            print(new_word2)
+                            new_word2 = ''.join([i if ord(i) < 128 else '' for i in new_word2])
+                            print(new_word2)
                             term += " " + new_word2
                             index += 1
                             len_term += 1
                         else:
                             break
                 if len_term == 1:  #appends to capital letter dict - key + num of tweets
+                    print(term)
+                    term = ''.join([i if ord(i) < 128 else '' for i in term])
+                    print(term)
                     self.capital_letter_dict[term.upper()] = True
                     """if term.upper() in self.capital_letter_dict:
                         self.capital_letter_dict[term.upper()][0] += 1
                     else:
                         self.capital_letter_dict[term.upper()] = True"""
                 elif len_term > 1: #appends to term dict - key + tweet id
+                    print(term)
                     if term in self.term_dict:
                         self.term_dict[term].append(tweet_id)
                     else:
@@ -159,7 +166,7 @@ class Parse:
         text_tokens[:] = [x for x in text_tokens if
                           x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and
                           x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""
-                          and x != "'re" and x != "__"]
+                          and x != "'re" and x != "__" and x != "_" and x != "___"]
 
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
@@ -174,8 +181,8 @@ class Parse:
                 rmv_index = text_tokens.index('#')
                 if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#'\
                         and text_tokens[rmv_index + 1][0] != '@':
-                    print(text_tokens)
-                    print(text_tokens[rmv_index + 1][0])
+                    #print(text_tokens)
+                    #print(text_tokens[rmv_index + 1][0])
                     word_val = text_tokens[rmv_index + 1]
                     if not word_val.isupper() and not word_val.islower() and word_val.find('_') == -1:  # split uppercase
                         list_of_words = re.findall('[A-Z][^A-Z]*', word_val)
