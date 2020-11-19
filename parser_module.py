@@ -1,5 +1,5 @@
 import re
-
+from math import floor
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -264,9 +264,9 @@ class Parse:
                     else:
                         text_tokens.append(new_num)
 
-        print(text_tokens)
+        #print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
-        #print(text_tokens_without_stopwords)
+        print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
     def parse_url(self, url):
@@ -289,6 +289,7 @@ class Parse:
         while abs(num) >= 1000:
             magnitude += 1
             num /= 1000.0
+        num = floor((num * 1000)) / 1000
         new_num = '{}{}'.format('{:.3f}'.format(num).rstrip('0').rstrip('.'),
                                 ['', 'K', 'M', 'B', 'T', 'Q', 'Q', 'SAF'][magnitude])
         return new_num
