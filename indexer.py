@@ -51,9 +51,9 @@ class Indexer:
                     if len(term_dict[term]) > 1:
                         self.inverted_idx[term] = len(term_dict[term])
 
-        if len(term_dict) != 0:
+        """if len(term_dict) != 0:
             print(self.inverted_idx)
-            print(len(self.inverted_idx))
+            print(len(self.inverted_idx))"""
 
 
 

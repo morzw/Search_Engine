@@ -42,30 +42,25 @@ class Parse:
                             self.term_dict[new_word] = [tweet_id]"""
                     while index < len(tokenized_text):  # find all term
                         if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
-                            new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
+                            new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()  # delete emoji
                             """if new_word2 in self.term_dict:  # enter each word in term
                                 self.term_dict[new_word2].append(tweet_id)
                             else:
                                 self.term_dict[new_word2] = [tweet_id]"""
-                            print(new_word2)
                             new_word2 = ''.join([i if ord(i) < 128 else '' for i in new_word2])
-                            print(new_word2)
                             term += " " + new_word2
                             index += 1
                             len_term += 1
                         else:
                             break
                 if len_term == 1:  #appends to capital letter dict - key + num of tweets
-                    print(term)
-                    term = ''.join([i if ord(i) < 128 else '' for i in term])
-                    print(term)
+                    term = ''.join([i if ord(i) < 128 else '' for i in term])  # delete emoji
                     self.capital_letter_dict[term.upper()] = True
                     """if term.upper() in self.capital_letter_dict:
                         self.capital_letter_dict[term.upper()][0] += 1
                     else:
                         self.capital_letter_dict[term.upper()] = True"""
                 elif len_term > 1: #appends to term dict - key + tweet id
-                    print(term)
                     if term in self.term_dict:
                         self.term_dict[term].append(tweet_id)
                     else:
@@ -269,10 +264,9 @@ class Parse:
                     else:
                         text_tokens.append(new_num)
 
-        #print(text_tokens)
+        print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
-        print(text_tokens_without_stopwords)
-        #print(tweet_id)
+        #print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
     def parse_url(self, url):

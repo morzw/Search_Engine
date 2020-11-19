@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -19,22 +21,29 @@ def run_engine():
     indexer = Indexer(config)
 
     #reading per folder
-    """r.create_files_name_list()
+    r.create_files_name_list()
     files_list = [] #every index contains all tweets per folder
     for file_name in r.dates_list:
         tweets_per_date = r.read_file(file_name)
         files_list.append(tweets_per_date)
-    print(len(files_list))
+    #print(len(files_list))
 
+    """counter = 1
     # Iterate over every document in the file
     for folder_list in files_list:
+        print(counter)
+        cr = datetime.now()
+        print(cr)
         for idx, tweet in enumerate(folder_list):
             # parse the document
             parsed_document = p.parse_doc(tweet)
             number_of_documents += 1
             # index the document data
-            indexer.add_new_doc(parsed_document)
-        #print(number_of_documents)
+            #indexer.add_new_doc(parsed_document)
+        print("number of tweets", number_of_documents)
+        cn = datetime.now()
+        print(cn)
+        counter += 1
     print('Finished parsing and indexing. Starting to export files')"""
 
     #read only one folder
