@@ -120,12 +120,90 @@ class Parse:
 
         self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
 
+        #NUMBERS
+        numbers = []
+        for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
+            if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3}){0,6}$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
+                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find(
+                        '%') == -1 and item.find('¢') == -1 and item.find('~') == -1 and item.find('+') == -1 and item.find('/') <= 1 and item.find("'") == -1:
+                    if item.find(',') == -1:
+                        numbers.append(item)
+                    elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
+                        numbers.append(item)
+        #if len(numbers) >0:
+        #    print(numbers)
+        fractions_list = []
+        for num in numbers:
+            occur = num.count('.')
+            if occur < 2:  # not a date
+                rmv_index = text_tokens.index(num)
+                to_append = True
+                no_text = True
+                found_fractions = False
+                if text_tokens[rmv_index].find("/") != -1 and rmv_index-1 > 0 and text_tokens[rmv_index-1].isnumeric():  # if found_fractions
+                    all_fractions = text_tokens[rmv_index-1] + " " + text_tokens[rmv_index]
+                    fractions_list.append(all_fractions)
+                    found_fractions = True
+                    to_append = True
+                if rmv_index + 1 < len(text_tokens):  # yes text
+                    if text_tokens[rmv_index + 1] == "million" or text_tokens[rmv_index + 1] == "Million" or \
+                            text_tokens[rmv_index + 1] == "M" or text_tokens[rmv_index + 1] == "m" or text_tokens[rmv_index + 1] == "MILLION":
+                        if len(num) < 6:
+                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
+                            new_num = self.parse_numbers(str(float(fixed_num) * 1000000))
+                        else:
+                            new_num = self.parse_numbers(num)
+                        no_text = False
+                        text_tokens[rmv_index + 1] = " "  # remove from list
+                        text_tokens[rmv_index] = " "
+                    if text_tokens[rmv_index + 1] == "billion" or text_tokens[rmv_index + 1] == "Billion" or \
+                            text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b" or text_tokens[rmv_index + 1] == "BILLION":
+                        if len(num) < 9:
+                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
+                            new_num = self.parse_numbers(str(float(fixed_num) * 1000000000))
+                        else:
+                            new_num = self.parse_numbers(num)
+                        no_text = False
+                        text_tokens[rmv_index + 1] = " "  # remove from list
+                        text_tokens[rmv_index] = " "
+                    if text_tokens[rmv_index + 1] == "thousand" or text_tokens[rmv_index + 1] == "Thousand" or \
+                            text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k" or text_tokens[rmv_index + 1] == "THOUSAND":
+                        if len(num) < 4:
+                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
+                            new_num = self.parse_numbers(str(float(fixed_num) * 1000))
+                        else:
+                            new_num = self.parse_numbers(num)
+                        no_text = False
+                        text_tokens[rmv_index + 1] = " "  # remove from list
+                        text_tokens[rmv_index] = " "
+                    if not no_text:
+                        text_tokens[rmv_index + 1]
+                if rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$': #yes $
+                    if no_text:
+                        if len(num) > 3:
+                            text_tokens.append("$" + self.parse_numbers(num))
+                        else:
+                            text_tokens.append("$" + num)
+                        text_tokens[rmv_index] = " "  # remove $ from list
+                        text_tokens[rmv_index - 1] = " "
+                    else:
+                        text_tokens.append("$" + new_num)
+                        text_tokens[rmv_index-1] = " "  # remove $ from list
+                    to_append = False
+                if to_append:  # no $
+                    if no_text:
+                        if len(num) > 3:
+                            text_tokens.append(self.parse_numbers(num))
+                            text_tokens[rmv_index] = " "  # remove num from list
+                    else:
+                        text_tokens.append(new_num)
+                if found_fractions:  # delete fractions
+                    del text_tokens[rmv_index]
+                    del text_tokens[rmv_index - 1]
         punctuations = '''!(-+—[]{};:'"\,)<>,./?^&*_’~|=→"”“'''  # removes relevant punctuations and http and //short url
         index_count = 0
         for word in text_tokens:
             to_delete = False
-            # text_tokens[index_count] = ''.join([i if ord(i) < 128 else '' for i in word])
-            # index_count += 1
             if len(word) > 1 and word.find('-') != -1:  # contains '-'
                 text_tokens.extend(word.split('-'))
                 text_tokens.remove(word)
@@ -200,7 +278,7 @@ class Parse:
                 text_tokens.remove('#')
 
         #NUMBERS
-        numbers = []
+        """numbers = []
         for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
             if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3}){0,6}$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
                 if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find(
@@ -209,7 +287,8 @@ class Parse:
                         numbers.append(item)
                     elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
                         numbers.append(item)
-        #print(numbers)
+        if len(numbers) >0:
+            print(numbers)
         for num in numbers:
             occur = num.count('.')
             if occur < 2:  # not a date
@@ -267,11 +346,12 @@ class Parse:
                             text_tokens.append(self.parse_numbers(num))
                             text_tokens[rmv_index] = " "  # remove num from list
                     else:
-                        text_tokens.append(new_num)
+                        text_tokens.append(new_num)"""
 
-        #print(text_tokens)
+        text_tokens.extend(fractions_list)  # add fractions
+        print(text_tokens)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
-        print(text_tokens_without_stopwords)
+        #print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
     def parse_url(self, url):
