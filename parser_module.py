@@ -61,11 +61,24 @@ class Parse:
                     else:
                         self.capital_letter_dict[term.upper()] = True"""
                 elif len_term > 1: #appends to term dict - key + tweet id
+                    found = False
                     if term in self.term_dict:
-                        self.term_dict[term].append(tweet_id)
+                        for tuple in self.term_dict[term]:
+                            if tuple[0] == tweet_id:
+                                found = True
+                                tuple[1] += 1
+                        if not found:
+                            self.term_dict[term].append([tweet_id, 1])
                     else:
-                        self.term_dict[term] = [tweet_id]
+                        self.term_dict[term] = [[tweet_id, 1]]
+                    print(self.term_dict[term])
             counter += len_term
+            """if tweet_id not in self.term_dict[term]:
+                    self.term_dict[term].append([tweet_id, 1])
+                else:
+                    for tuple in self.term_dict[term]:
+                        if tuple[0] == tweet_id:
+                            self.term_dict[term][1] += 1"""
         #print(self.capital_letter_dict)
         #print(self.term_dict)
 
@@ -75,7 +88,7 @@ class Parse:
         :param text:
         :return:
         """
-        print(text)
+        #print(text)
         text_tokens = word_tokenize(text)
         # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
@@ -349,8 +362,9 @@ class Parse:
                         text_tokens.append(new_num)"""
 
         text_tokens.extend(fractions_list)  # add fractions
-        print(text_tokens)
+
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
+        #print(text_tokens)
         #print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
