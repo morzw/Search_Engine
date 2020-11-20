@@ -64,7 +64,7 @@ def run_engine():
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
-    utils.save_obj(indexer.postingDict, "posting")
+    utils.save_obj(indexer.temp_posting_dict, "posting")
 
 
 def load_index():

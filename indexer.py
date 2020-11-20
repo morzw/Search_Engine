@@ -1,8 +1,15 @@
+import copy
+import json
+
+
 class Indexer:
+
+    num_of_terms_in_posting_dict = 0
 
     def __init__(self, config):
         self.inverted_idx = {}
-        self.postingDict = {}
+        self.temp_posting_dict = {}
+        self.copy_posting_dict = {}
         self.tfidfDict = {}
         self.config = config
 
@@ -21,20 +28,54 @@ class Indexer:
         self.tfidfDict[tweet_id] = []
         self.tfidfDict[tweet_id].append((document.max_tf, document.distinct_words))
 
+        # # Go over each term in the doc
+        # for term in document_dictionary.keys():
+        #     try:
+        #         # Update inverted index and posting
+        #         if term not in self.inverted_idx.keys():
+        #             self.inverted_idx[term] = 1
+        #             self.postingDict[term] = []
+        #         else:
+        #             self.inverted_idx[term] += 1
+        #
+        #         self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
+        #
+        #     except:
+        #         print('problem with the following key {}'.format(term[0]))
+
         # Go over each term in the doc
+        json_counter = 1
+
         for term in document_dictionary.keys():
-            try:
-                # Update inverted index and posting
-                if term not in self.inverted_idx.keys():
-                    self.inverted_idx[term] = 1
-                    self.postingDict[term] = []
-                else:
-                    self.inverted_idx[term] += 1
+            if self.num_of_terms_in_posting_dict < 10:
+                try:
+                    # Update posting
+                    if term not in self.temp_posting_dict.keys():
+                        self.num_of_terms_in_posting_dict += 1
+                        self.temp_posting_dict[term] = []
+                        self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+                    else:
+                        self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+                except:
+                    print('problem with the following key {}'.format(term[0]))
+            else:  # num_of_terms_in_posting_dict == 10000000
+                num_of_terms_in_posting_dict = 0
+                # copy temp_posting_dict
+                self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
+                # empty temp_posting_dict
+                self.temp_posting_dict.clear()
+                print("*********************************************")
+                print(self.copy_posting_dict)
+                print("*********************************************")
+                # make a json file out of the sorted_posting_dict
+                with open('posting'+str(json_counter)+'.json', 'w') as fp:
+                    json.dump(self.copy_posting_dict, fp, sort_keys=True)
 
-                self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
+                # empty copy_posting_dict
+                self.copy_posting_dict.clear()
+                json_counter += 1
+                self.num_of_terms_in_posting_dict = 0
 
-            except:
-                print('problem with the following key {}'.format(term[0]))
 
         # Change all capital letter terms in dict
         if len(capital_letter_dict) != 0:
