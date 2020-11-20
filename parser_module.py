@@ -68,10 +68,9 @@ class Parse:
                                 found = True
                                 tuple[1] += 1
                         if not found:
-                            self.term_dict[term].append([tweet_id, 1])
+                            self.term_dict[term].append([tweet_id, 1])  # tweet_id , #shows in tweet
                     else:
                         self.term_dict[term] = [[tweet_id, 1]]
-                    print(self.term_dict[term])
             counter += len_term
             """if tweet_id not in self.term_dict[term]:
                     self.term_dict[term].append([tweet_id, 1])
@@ -409,30 +408,33 @@ class Parse:
         quote_url = doc_as_list[7]
         term_dict = {}
 
-        #  url tokenized
-        #print(url)
-        #tokenized_url = self.parse_url(url)
-        tokenized_url = ''
-        #print(tokenized_url)
-
-        if len(tokenized_url) != 0: #TODO: delete short http
-            for term in tokenized_url:
-                if term not in term_dict.keys():
-                    term_dict[term] = 1
-                else:
-                    term_dict[term] += 1
-
-        #  text tokenized
+        # text tokenized
+        idx_in_tweet = 0
         tokenized_text = self.parse_sentence(full_text, tweet_id)
-        #tokenized_text = ''
-        doc_length = len(tokenized_text)  # after text operations.
-
         for term in tokenized_text:
             if term.isdigit() or len(term) > 1:
                 if term not in term_dict.keys():
-                    term_dict[term] = 1
+                    term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
                 else:
-                    term_dict[term] += 1
+                    term_dict[term][0] += 1
+                    term_dict[term][1].append(idx_in_tweet)
+                idx_in_tweet += 1
+
+        doc_length = len(tokenized_text)  # after text operations.
+
+        # url tokenized
+        tokenized_url = self.parse_url(url)
+        if len(tokenized_url) != 0:
+            for term in tokenized_url:
+                if not (term == "http" or term == "https" or term == "t.co"):
+                    if term not in term_dict.keys():
+                        term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
+                    else:
+                        term_dict[term][0] += 1
+                        term_dict[term][1].append(idx_in_tweet)
+                    idx_in_tweet += 1
+        #print(tokenized_text)
+        #print(term_dict)
 
         # find max_tf in each tweet
         max_tf = 0
