@@ -59,7 +59,7 @@ class Indexer:
                 except:
                     print('problem with the following key {}'.format(term[0]))
             else:  # num_of_terms_in_posting_dict == 10000000
-                num_of_terms_in_posting_dict = 0
+                self.num_of_terms_in_posting_dict = 0
                 # copy temp_posting_dict
                 self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
                 # empty temp_posting_dict
