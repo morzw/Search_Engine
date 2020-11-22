@@ -48,7 +48,7 @@ class Indexer:
         #         print('problem with the following key {}'.format(term[0]))
 
         # Go over each term in the doc
-        if len(self.temp_posting_dict) < 100000:
+        if len(self.temp_posting_dict) < 10000:
             for term in document_dictionary.keys():
                     try:
                         # Update posting
@@ -79,8 +79,8 @@ class Indexer:
             print("*********************************************")
             # empty copy_posting_dict
             self.sorted_posting_dict.clear()
-            #if self.file_counter == 2:
-            #    self.combine_sorted_files("posting1.txt", "posting2.txt")
+            if self.file_counter > 0 and self.file_counter % 2 == 0:  # merge every two text files
+                self.combine_sorted_files("posting"+str(self.file_counter-1)+".txt", "posting"+str(self.file_counter)+".txt")
             self.file_counter += 1
 
 
@@ -129,7 +129,13 @@ class Indexer:
                             break
 
                         read_file1, read_file2 = False, False
-                        if line1 < line2:
+                        # find the keys of the line
+                        idx1 = line1.index(":")
+                        str1 = line1[:idx1]
+                        idx2 = line2.index(":")
+                        str2 = line2[:idx2]
+                        # sort by keys
+                        if str1 < str2:
                             smaller = line1
                             read_file1 = True
                         else:
@@ -147,6 +153,7 @@ class Indexer:
                         output_file.write(line2)
                         output_file.write("\n")
                         line2 = self.read_non_empty_line(input_file2)
+        self.res_counter += 1
 
 
 
