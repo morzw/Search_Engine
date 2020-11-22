@@ -51,16 +51,10 @@ def run_engine():
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
         # parse the document
-        ans = p.parse_doc(document)
-        parsed_document = ans[0]
-        capital_letter_dict = {}
-        capital_letter_dict.update(ans[1])
-        term_dict = {}
-        term_dict.update(ans[2])
-
+        parsed_document = p.parse_doc(document)
         number_of_documents += 1
         # index the document data
-        indexer.add_new_doc(parsed_document, capital_letter_dict, term_dict)
+        indexer.add_new_doc(parsed_document)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")

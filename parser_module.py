@@ -87,8 +87,9 @@ class Parse:
         :param text:
         :return:
         """
-        #print(text)
+        print(text)
         text_tokens = word_tokenize(text)
+        print(text_tokens)
         # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
@@ -382,6 +383,8 @@ class Parse:
     # TODO: round num
     def parse_numbers(self, str):
         fixed_str = re.sub("[^\d\.]", "", str)
+        if len(fixed_str) > 22:  # num is too big
+            return fixed_str
         num = float(fixed_str)
         magnitude = 0
         while abs(num) >= 1000:
@@ -433,8 +436,9 @@ class Parse:
                         term_dict[term][0] += 1
                         term_dict[term][1].append(idx_in_tweet)
                     idx_in_tweet += 1
-        #print(tokenized_text)
+        #print(full_text)
         #print(term_dict)
+        #print(tokenized_text)
 
         # find max_tf in each tweet
         max_tf = 0
@@ -448,10 +452,10 @@ class Parse:
             all_keys = term_dict.keys()
             distinct_words = len(all_keys)
 
-        tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                            quote_url, term_dict, doc_length, max_tf, distinct_words)
-
         if self.finished:
-            return tweet, self.capital_letter_dict, self.term_dict
+            tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
+                             quote_url, term_dict, doc_length, max_tf, distinct_words, self.capital_letter_dict, self.term_dict)
         else:
-            return tweet, {}, {}
+            tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
+                             quote_url, term_dict, doc_length, max_tf, distinct_words, {}, {})
+        return tweet
