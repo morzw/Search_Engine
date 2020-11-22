@@ -1,3 +1,4 @@
+import collections
 import copy
 import json
 
@@ -5,11 +6,13 @@ import json
 class Indexer:
 
     num_of_terms_in_posting_dict = 0
+    json_counter = 1
 
     def __init__(self, config):
         self.inverted_idx = {}
         self.temp_posting_dict = {}
         self.copy_posting_dict = {}
+        self.sorted_posting_dict = {}
         self.tfidfDict = {}
         self.config = config
 
@@ -44,38 +47,38 @@ class Indexer:
         #         print('problem with the following key {}'.format(term[0]))
 
         # Go over each term in the doc
-        json_counter = 1
-
-        for term in document_dictionary.keys():
-            if self.num_of_terms_in_posting_dict < 10:
-                try:
-                    # Update posting
-                    if term not in self.temp_posting_dict.keys():
-                        self.num_of_terms_in_posting_dict += 1
-                        self.temp_posting_dict[term] = []
-                        self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
-                    else:
-                        self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
-                except:
-                    print('problem with the following key {}'.format(term[0]))
-            else:  # num_of_terms_in_posting_dict == 10000000
-                self.num_of_terms_in_posting_dict = 0
-                # copy temp_posting_dict
-                self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
-                # empty temp_posting_dict
-                self.temp_posting_dict.clear()
-                print("*********************************************")
-                print(self.copy_posting_dict)
-                print("*********************************************")
-                # make a json file out of the sorted_posting_dict
-                with open('posting'+str(json_counter)+'.json', 'w') as fp:
-                    json.dump(self.copy_posting_dict, fp, sort_keys=True)
-
-                # empty copy_posting_dict
-                self.copy_posting_dict.clear()
-                json_counter += 1
-                self.num_of_terms_in_posting_dict = 0
-
+        if len(self.temp_posting_dict) < 10000:
+            for term in document_dictionary.keys():
+                    try:
+                        # Update posting
+                        if term not in self.temp_posting_dict.keys():
+                            self.num_of_terms_in_posting_dict += 1
+                            self.temp_posting_dict[term] = []
+                            self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+                        else:
+                            self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+                    except:
+                        print('problem with the following key {}'.format(term[0]))
+        else:  # num_of_terms_in_posting_dict == 100
+            # copy temp_posting_dict
+            self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
+            # empty temp_posting_dict
+            self.temp_posting_dict.clear()
+            # sort the dict
+            self.sorted_posting_dict = collections.OrderedDict(sorted(self.copy_posting_dict.items()))
+            # empty copy_posting_dict
+            self.copy_posting_dict.clear()
+            print("*********************************************")
+            # make a txt file out of the sorted_posting_dict
+            with open('posting'+str(self.json_counter)+'.txt', 'w', encoding='utf-8') as fp:
+                for p in self.sorted_posting_dict.items():
+                    fp.write("%s:%s\n" % p)
+            print("*********************************************")
+            #print(self.temp_posting_dict)
+            #print("*********************************************")
+            # empty copy_posting_dict
+            self.sorted_posting_dict.clear()
+            self.json_counter += 1
 
         # Change all capital letter terms in dict
         if len(capital_letter_dict) != 0:
