@@ -259,7 +259,7 @@ class Parse:
                           x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and
                           x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""
                           and x != "'re" and x != "__" and x != "_" and x != "___" and x != "," and x != "!"]"""
-
+        # punctuations
         new_words = []
         for word in text_tokens:
             word = re.sub('t.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|^http.*|^https.*|^RT$|^rt$',
@@ -275,14 +275,14 @@ class Parse:
             index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
             for index in index_list3:
                 if index + 1 < len(text_tokens):
-                    if text_tokens[index + 1] != '#' and text_tokens[index + 1][0] != '@': #next word is not # and not @
+                    if text_tokens[index + 1] != '#' and text_tokens[index + 1][0] != '@' and text_tokens[index + 1].find("#") == -1: #next word is not # and not @
                         if text_tokens[index + 1].find('_') == -1:  # not contains '_'
                             new_term = text_tokens[index] + text_tokens[index + 1]
                             text_tokens.append(new_term)
             for sign in range(len(index_list3)):  # deletes all '#' and the word after it from list
                 rmv_index = text_tokens.index('#')
                 if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#'\
-                        and text_tokens[rmv_index + 1][0] != '@':
+                        and text_tokens[rmv_index + 1][0] != '@' and text_tokens[rmv_index + 1].find("#") == -1:
                     #print(text_tokens)
                     #print(text_tokens[rmv_index + 1][0])
                     word_val = text_tokens[rmv_index + 1]
@@ -376,7 +376,7 @@ class Parse:
 
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         # print(text_tokens)
-        # print(text_tokens_without_stopwords)
+        #print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
     def parse_url(self, url):
@@ -439,7 +439,7 @@ class Parse:
         tokenized_url = self.parse_url(url)
         if len(tokenized_url) != 0:
             for term in tokenized_url:
-                if not (term == "http" or term == "https" or term == "t.co"):
+                if not (term == "http" or term == "https" or term == "t.co" or term == "!" or term == "#" or term == "~"):
                     if term not in term_dict.keys():
                         term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
                     else:

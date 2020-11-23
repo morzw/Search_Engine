@@ -47,7 +47,7 @@ class Indexer:
         #         print('problem with the following key {}'.format(term[0]))
 
         # Go over each term in the doc
-        if len(self.temp_posting_dict) < 100000:
+        if len(self.temp_posting_dict) < 10000:
             for term in document_dictionary.keys():
                     try:
                         # Update posting
