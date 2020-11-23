@@ -1,12 +1,13 @@
 import collections
 import copy
+import os
 
 
 class Indexer:
 
     num_of_terms_in_posting_dict = 0
     file_counter = 1
-    res_counter = 1
+    file_name_list = []
 
     def __init__(self, config):
         self.inverted_idx = {}
@@ -47,7 +48,7 @@ class Indexer:
         #         print('problem with the following key {}'.format(term[0]))
 
         # Go over each term in the doc
-        if len(self.temp_posting_dict) < 10000:
+        if len(self.temp_posting_dict) < 100000:
             for term in document_dictionary.keys():
                     try:
                         # Update posting
@@ -80,22 +81,43 @@ class Indexer:
             self.sorted_posting_dict.clear()
             #if self.file_counter > 0 and self.file_counter % 2 == 0:  # merge every two text files
             #    self.combine_sorted_files("posting"+str(self.file_counter-1)+".txt", "posting"+str(self.file_counter)+".txt")
+            self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
 
-        # Change all capital letter terms in dict
+
+
+        """# Change all capital letter terms in dict
         if len(document.capital_letter_dict) != 0:
             for term in document.capital_letter_dict:
                 if document.capital_letter_dict[term]:  # if the term is upper is all corpus
                     if term.lower() in self.inverted_idx:
                         self.inverted_idx[term] = self.inverted_idx[term.lower()]
-                        del self.inverted_idx[term.lower()]
+                        del self.inverted_idx[term.lower()]"""
 
-        # append all terms to dict
+        # create new file of term_dict
         if len(document.term_dict) != 0:
-            for term in document.term_dict:
-                if term not in self.inverted_idx:
-                    if len(document.term_dict[term]) > 1:
-                        self.inverted_idx[term] = len(document.term_dict[term])
+            # make a txt file out of the term_dict
+            with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
+                for p in document.term_dict.items():
+                    for str1 in p[1]:
+                        s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-100"
+                        fp.write(s + "\n")
+                        print(s)
+            self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
+            self.file_counter += 1
+
+
+        # merge all files to one
+        if len(document.term_dict) != 0:
+            while len(self.file_name_list) > 1:
+                print(self.file_name_list)
+                self.combine_sorted_files(self.file_name_list[0], self.file_name_list[1])
+                # remove all files and names
+                os.remove(self.file_name_list[1])
+                os.remove(self.file_name_list[0])
+                self.file_name_list.remove(self.file_name_list[1])
+                self.file_name_list.remove(self.file_name_list[0])
+            print(self.file_name_list)
 
     def read_non_empty_line(self, input):
         while True:
@@ -108,7 +130,7 @@ class Indexer:
     def combine_sorted_files(self, file1, file2):
         print('##################################')
         read_file1, read_file2 = True, True
-        with open('res' + str(self.res_counter) + '.txt', 'w', encoding='utf-8') as output_file:
+        with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as output_file:
             with open(file1, 'r', encoding='utf-8') as input_file1:
                 with open(file2, 'r', encoding='utf-8') as input_file2:
                     while True:
@@ -145,7 +167,9 @@ class Indexer:
                         output_file.write(line2)
                         output_file.write("\n")
                         line2 = self.read_non_empty_line(input_file2)
-        self.res_counter += 1
+
+        self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
+        self.file_counter += 1
 
 
 

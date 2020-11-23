@@ -78,7 +78,7 @@ def search_and_rank_query(query, inverted_index, k):
     return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
-def main():
+def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     run_engine()
     query = input("Please enter a query: ")
     k = int(input("Please enter number of docs to retrieve: "))
