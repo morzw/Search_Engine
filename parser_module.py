@@ -11,6 +11,7 @@ class Parse:
     term_dict = {}
     capital_letter_dict = {}
     finished = False
+
     def __init__(self):
         self.stop_words = stopwords.words('english')
 
@@ -87,9 +88,9 @@ class Parse:
         :param text:
         :return:
         """
-        print(text)
+        # print(text)
         text_tokens = word_tokenize(text)
-        print(text_tokens)
+        #print(text_tokens)
         # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
@@ -190,8 +191,8 @@ class Parse:
                         text_tokens[rmv_index + 1] = " "  # remove from list
                         text_tokens[rmv_index] = " "
                     if not no_text:
-                        text_tokens[rmv_index + 1]
-                if rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$': #yes $
+                        text_tokens[rmv_index + 1]  # TODO:?????????????????
+                if rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$':  # yes $
                     if no_text:
                         if len(num) > 3:
                             text_tokens.append("$" + self.parse_numbers(num))
@@ -213,7 +214,7 @@ class Parse:
                 if found_fractions:  # delete fractions
                     del text_tokens[rmv_index]
                     del text_tokens[rmv_index - 1]
-        punctuations = '''!(-+—[]{};:'"\,)<>,./?^&*_’~|=→"”“'''  # removes relevant punctuations and http and //short url
+        """punctuations = '''!(-+—[]{};:'",)<>,./?^&*_’~|=→"”“'''  # removes relevant punctuations and http and //short url
         index_count = 0
         for word in text_tokens:
             to_delete = False
@@ -257,7 +258,17 @@ class Parse:
         text_tokens[:] = [x for x in text_tokens if
                           x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and
                           x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""
-                          and x != "'re" and x != "__" and x != "_" and x != "___"]
+                          and x != "'re" and x != "__" and x != "_" and x != "___" and x != "," and x != "!"]"""
+
+        new_words = []
+        for word in text_tokens:
+            word = re.sub('t.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|^http.*|^https.*|^RT$|^rt$',
+                '', word, flags=re.IGNORECASE)
+            word = ''.join([i if ord(i) < 128 else '' for i in word])
+            if word == '' or word == ' ':
+                continue
+            new_words.append(word)
+        text_tokens = new_words
 
         # TODO: #whereIsKCR combined
         if "#" in text_tokens:  # find HASHTAGS
@@ -364,8 +375,8 @@ class Parse:
         text_tokens.extend(fractions_list)  # add fractions
 
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
-        #print(text_tokens)
-        #print(text_tokens_without_stopwords)
+        # print(text_tokens)
+        # print(text_tokens_without_stopwords)
         return text_tokens_without_stopwords
 
     def parse_url(self, url):
@@ -380,7 +391,6 @@ class Parse:
             url_tokens.remove("")
         return url_tokens
 
-    # TODO: round num
     def parse_numbers(self, str):
         fixed_str = re.sub("[^\d\.]", "", str)
         if len(fixed_str) > 22:  # num is too big

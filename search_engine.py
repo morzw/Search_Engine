@@ -28,25 +28,27 @@ def run_engine():
         files_list.append(tweets_per_date)
     #print(len(files_list))
 
-    """counter = 1
-    # Iterate over every document in the file
+    counter = 1
+    # Iterate over every folder in the DATA
     for folder_list in files_list:
         print(counter)
         cr = datetime.now()
         print(cr)
+        # Iterate over every tweet in the folder
         for idx, tweet in enumerate(folder_list):
-            # parse the document
+            # parse the tweet
             parsed_document = p.parse_doc(tweet)
             number_of_documents += 1
-            # index the document data
-            #indexer.add_new_doc(parsed_document)
+            # index the tweet data
+            indexer.add_new_doc(parsed_document)
+
         print("number of tweets", number_of_documents)
         cn = datetime.now()
         print(cn)
         counter += 1
-    print('Finished parsing and indexing. Starting to export files')"""
+    print('Finished parsing and indexing. Starting to export files')
 
-    #read only one folder
+    """#read only one folder
     documents_list = r.read_file(file_name='')
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
@@ -54,8 +56,8 @@ def run_engine():
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
         # index the document data
-        indexer.add_new_doc(parsed_document)
-    print('Finished parsing and indexing. Starting to export files')
+        #indexer.add_new_doc(parsed_document)
+    print('Finished parsing and indexing. Starting to export files')"""
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.temp_posting_dict, "posting")
