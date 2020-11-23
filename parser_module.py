@@ -4,6 +4,8 @@ from math import floor
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from document import Document
+from configuration import ConfigClass
+from stemmer import Stemmer
 
 
 class Parse:
@@ -14,6 +16,7 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
+        self.to_stem = ConfigClass().get__toStem()
 
     def parse_term(self, tokenized_text, tweet_id):
 
@@ -88,10 +91,9 @@ class Parse:
         :param text:
         :return:
         """
-        # print(text)
+        print(text)
         text_tokens = word_tokenize(text)
         #print(text_tokens)
-        # TODO: find emails regex
         if "@" in text_tokens:  # find TAGS
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
             counter = 0
@@ -110,7 +112,6 @@ class Parse:
                         del text_tokens[rmv_index + 1]
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('@')
-        # TODO: ask about number in words
         if "%" or "percent" or "Percent" or "percentage" or "Percentage" in text_tokens:  # find PERCENTAGES
             index_list2 = [n for n, x in enumerate(text_tokens) if x == '%' or x == 'percent' or x == "percentage" or x == 'Percent' or x == "Percentage"]
             counter2 = 0
@@ -265,7 +266,7 @@ class Parse:
             word = re.sub('t.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|^http.*|^https.*|^RT$|^rt$',
                 '', word, flags=re.IGNORECASE)
             word = ''.join([i if ord(i) < 128 else '' for i in word])
-            if word == '' or word == ' ':
+            if word == '' or word == ' ' or len(word) == 1:
                 continue
             new_words.append(word)
         text_tokens = new_words
@@ -376,7 +377,16 @@ class Parse:
 
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         # print(text_tokens)
-        #print(text_tokens_without_stopwords)
+        print(text_tokens_without_stopwords)
+
+        if (self.to_stem):
+            stem_text_tokens_without_stopwords = []
+            for token in text_tokens_without_stopwords:
+                stem_token = Stemmer().stem_term(token)
+                stem_text_tokens_without_stopwords.append(stem_token)
+            print(stem_text_tokens_without_stopwords)
+            return stem_text_tokens_without_stopwords
+
         return text_tokens_without_stopwords
 
     def parse_url(self, url):
