@@ -91,7 +91,7 @@ class Parse:
         :param text:
         :return:
         """
-        print(text)
+        #print(text)
         text_tokens = word_tokenize(text)
         #print(text_tokens)
         if "@" in text_tokens:  # find TAGS
@@ -377,14 +377,14 @@ class Parse:
 
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         # print(text_tokens)
-        print(text_tokens_without_stopwords)
+        #print(text_tokens_without_stopwords)
 
-        if (self.to_stem):
+        if self.to_stem:
             stem_text_tokens_without_stopwords = []
             for token in text_tokens_without_stopwords:
                 stem_token = Stemmer().stem_term(token)
                 stem_text_tokens_without_stopwords.append(stem_token)
-            print(stem_text_tokens_without_stopwords)
+            #print(stem_text_tokens_without_stopwords)
             return stem_text_tokens_without_stopwords
 
         return text_tokens_without_stopwords

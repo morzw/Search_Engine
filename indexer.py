@@ -5,7 +5,7 @@ import os
 
 class Indexer:
 
-    num_of_terms_in_posting_dict = 0
+    posting_file_num = 1
     file_counter = 1
     file_name_list = []
 
@@ -53,14 +53,13 @@ class Indexer:
                     try:
                         # Update posting
                         if term not in self.temp_posting_dict.keys():
-                            self.num_of_terms_in_posting_dict += 1
                             self.temp_posting_dict[term] = []
                             self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
                         else:
                             self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
                     except:
                         print('problem with the following key {}'.format(term[0]))
-        else:  # num_of_terms_in_posting_dict == 100
+        else: # len(self.temp_posting_dict) == 100000
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
             # empty temp_posting_dict
@@ -79,12 +78,30 @@ class Indexer:
             print("*********************************************")
             # empty copy_posting_dict
             self.sorted_posting_dict.clear()
-            #if self.file_counter > 0 and self.file_counter % 2 == 0:  # merge every two text files
-            #    self.combine_sorted_files("posting"+str(self.file_counter-1)+".txt", "posting"+str(self.file_counter)+".txt")
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
 
-
+        if len(document.term_dict) != 0 and len(self.temp_posting_dict) > 0:
+            # copy temp_posting_dict
+            self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
+            # empty temp_posting_dict
+            self.temp_posting_dict.clear()
+            # sort the dict
+            self.sorted_posting_dict = collections.OrderedDict(sorted(self.copy_posting_dict.items()))
+            # empty copy_posting_dict
+            self.copy_posting_dict.clear()
+            print("*********************************************")
+            # make a txt file out of the sorted_posting_dict
+            with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
+                for p in self.sorted_posting_dict.items():
+                    for str1 in p[1]:
+                        s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
+                        fp.write(s+"\n")
+            print("*********************************************")
+            # empty copy_posting_dict
+            self.sorted_posting_dict.clear()
+            self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
+            self.file_counter += 1
 
         """# Change all capital letter terms in dict
         if len(document.capital_letter_dict) != 0:
@@ -94,6 +111,7 @@ class Indexer:
                         self.inverted_idx[term] = self.inverted_idx[term.lower()]
                         del self.inverted_idx[term.lower()]"""
 
+        time_to_merge = False
         # create new file of term_dict
         if len(document.term_dict) != 0:
             # make a txt file out of the term_dict
@@ -102,13 +120,12 @@ class Indexer:
                     for str1 in p[1]:
                         s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-100"
                         fp.write(s + "\n")
-                        print(s)
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
-
+            time_to_merge = True
 
         # merge all files to one
-        if len(document.term_dict) != 0:
+        if time_to_merge:
             while len(self.file_name_list) > 1:
                 print(self.file_name_list)
                 self.combine_sorted_files(self.file_name_list[0], self.file_name_list[1])
@@ -118,6 +135,8 @@ class Indexer:
                 self.file_name_list.remove(self.file_name_list[1])
                 self.file_name_list.remove(self.file_name_list[0])
             print(self.file_name_list)
+            # finished the big posting file
+            self.create_inverted_index(self.file_name_list[0])
 
     def read_non_empty_line(self, input):
         while True:
@@ -172,5 +191,38 @@ class Indexer:
         self.file_counter += 1
 
 
+    def create_inverted_index (self, file_name):
+
+        with open(file_name, buffering=2000000, encoding='utf-8') as f:
+            num_of_lines = 1
+            posting_string = []
+            for line in f:
+                posting_string.append(line)
+                term = line.split(":")[0]
+                if term not in self.inverted_idx.keys():
+                    self.inverted_idx[term] = []
+                    self.inverted_idx[term].append([1, 'posting' + str(self.posting_file_num) + '.txt'])  # num of tweets, pointer
+                else:
+                    self.inverted_idx[term][0][0] += 1
+                if num_of_lines == 875268:
+                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                    with open('posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
+                        for p in posting_string:
+                            fp.write(p)
+                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                    self.posting_file_num += 1
+                    num_of_lines = 1
+                    posting_string = []
+                num_of_lines += 1
+
+            # adding the last terms to posting file
+            if len(posting_string) > 0:
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                with open('posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
+                    for p in posting_string:
+                        fp.write(p)
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                self.posting_file_num += 1
+        os.remove(self.file_name_list[0])
 
 

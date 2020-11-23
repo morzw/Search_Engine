@@ -78,7 +78,14 @@ def search_and_rank_query(query, inverted_index, k):
     return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
-def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
+#def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
+def main():
+    # config = ConfigClass()
+    # config.set__toStem(stemming)
+    # config.set__corpusPath(corpus_path)
+    # config.set__savedFileMainFolder( output_path)
+    # k = num_docs_to_retrieve
+    # query = queries
     run_engine()
     query = input("Please enter a query: ")
     k = int(input("Please enter number of docs to retrieve: "))
