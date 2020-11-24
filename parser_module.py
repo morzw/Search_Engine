@@ -35,6 +35,7 @@ class Parse:
                     self.capital_letter_dict[word_upper] = False  # to remove afterwords
             if len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper() and counter-1 >= 0 and tokenized_text[counter-1] != '#':  # upper first char and not #
                 term = word
+                original_term = word
                 if tokenized_text.index(word) + 1 < len(tokenized_text):
                     index = tokenized_text.index(word) + 1
                     """if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[
@@ -46,25 +47,32 @@ class Parse:
                             self.term_dict[new_word] = [tweet_id]"""
                     while index < len(tokenized_text):  # find all term
                         if len(tokenized_text[index]) > 1 and re.search('[a-zA-Z]', tokenized_text[index]) and tokenized_text[index][0].isupper():
-                            new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()  # delete emoji
+                            original_word = tokenized_text[index]
+                            new_word2 = tokenized_text[index][0] + tokenized_text[index][1:].lower()
                             """if new_word2 in self.term_dict:  # enter each word in term
                                 self.term_dict[new_word2].append(tweet_id)
                             else:
                                 self.term_dict[new_word2] = [tweet_id]"""
-                            new_word2 = ''.join([i if ord(i) < 128 else '' for i in new_word2])
+                            new_word2 = ''.join([i if ord(i) < 128 else '' for i in new_word2])# delete emoji
                             term += " " + new_word2
+                            original_term += " " + original_word
+
                             index += 1
                             len_term += 1
                         else:
                             break
-                if len_term == 1:  #appends to capital letter dict - key + num of tweets
+
+                if len_term == 1:  # appends to capital_letter_dict - key + num of tweets
                     term = ''.join([i if ord(i) < 128 else '' for i in term])  # delete emoji
                     self.capital_letter_dict[term.upper()] = True
                     """if term.upper() in self.capital_letter_dict:
                         self.capital_letter_dict[term.upper()][0] += 1
                     else:
                         self.capital_letter_dict[term.upper()] = True"""
-                elif len_term > 1: #appends to term dict - key + tweet id
+                elif len_term > 1:  # appends to term_dict - key + tweet id
+                    final_term = original_term.split(" ")
+                    for word in final_term:
+                        tokenized_text.remove(word)
                     found = False
                     if term in self.term_dict:
                         for tuple in self.term_dict[term]:

@@ -1,4 +1,7 @@
+import re
 from datetime import datetime
+
+from nltk.corpus import stopwords
 
 from reader import ReadFile
 from configuration import ConfigClass
@@ -60,7 +63,7 @@ def run_engine():
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
-    utils.save_obj(indexer.temp_posting_dict, "posting")
+    utils.save_obj(indexer.tfidfDict, "tfidfDict")
 
 
 def load_index():
@@ -69,13 +72,55 @@ def load_index():
     return inverted_index
 
 
-def search_and_rank_query(query, inverted_index, k):
-    p = Parse()
-    query_as_list = p.parse_sentence(query)
-    searcher = Searcher(inverted_index)
-    relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
-    ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs)
-    return searcher.ranker.retrieve_top_k(ranked_docs, k)
+def search_and_rank_query(queries, inverted_index, k):
+    queries_list = []
+    if type(queries) is list:  # if queries is a list
+        for query in queries:
+            queries_list.append(query)
+    if type(queries) is str:  # if queries is a text file
+        with open(queries, encoding='utf-8') as f:
+            for line in f:
+                queries_list.append(line)
+    for query in queries_list:
+        p = Parse()
+        query_as_list = p.parse_sentence(query, 0)
+        # adds upper case words to the query
+        original_query_list = query.split(" ")
+        stop_words = stopwords.words('english')
+        original_query_list = [w for w in original_query_list if w not in stop_words]
+        print(original_query_list)
+
+        counter = 0
+        while counter < len(original_query_list):  # find big terms
+            len_term = 1
+            word = original_query_list[counter]
+            if word.isupper():  # NBA
+                query_as_list.append(word)
+            elif len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper():  # upper first char
+                term = word
+                if original_query_list.index(word) + 1 < len(original_query_list):
+                    index = original_query_list.index(word) + 1
+                    while index < len(original_query_list):  # find all term
+                        if len(original_query_list[index]) > 1 and re.search('[a-zA-Z]', original_query_list[index]) and \
+                                original_query_list[index][0].isupper():
+                            new_word2 = original_query_list[index][0] + original_query_list[index][1:].lower()  # Donald Trump
+                            term += " " + new_word2
+                            index += 1
+                            len_term += 1
+                        else:
+                            break
+                    if len_term > 1:
+                        query_as_list.append(term)
+            counter += len_term
+        print(query_as_list)
+        searcher = Searcher(inverted_index)
+        relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
+        #print(relevant_docs)
+        print("done")
+
+      #  if len(relevant_docs) > 0:
+     #       ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs)
+    #return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
 #def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
@@ -87,8 +132,9 @@ def main():
     # k = num_docs_to_retrieve
     # query = queries
     run_engine()
-    query = input("Please enter a query: ")
-    k = int(input("Please enter number of docs to retrieve: "))
+    #query = input("Please enter a query: ")
+    #k = int(input("Please enter number of docs to retrieve: "))
     inverted_index = load_index()
-    for doc_tuple in search_and_rank_query(query, inverted_index, k):
+    #for doc_tuple in search_and_rank_query(query, inverted_index, k):
+    for doc_tuple in search_and_rank_query(["A study from the CDC and the WHO “proves face masks do not prevent the spread of a virus.”", "Corona Virus is less NBA dangerous than the flu"], inverted_index, 5):
         print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))

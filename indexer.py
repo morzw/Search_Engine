@@ -8,6 +8,7 @@ class Indexer:
     posting_file_num = 1
     file_counter = 1
     file_name_list = []
+    finished_inverted = False
 
     def __init__(self, config):
         self.inverted_idx = {}
@@ -15,6 +16,7 @@ class Indexer:
         self.copy_posting_dict = {}
         self.sorted_posting_dict = {}
         self.tfidfDict = {}
+        self.sorted_term_dict = {}
         self.config = config
 
     def add_new_doc(self, document):
@@ -103,24 +105,31 @@ class Indexer:
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
 
-        """# Change all capital letter terms in dict
-        if len(document.capital_letter_dict) != 0:
+        # Change all capital letter terms in dict
+        if self.finished_inverted:
             for term in document.capital_letter_dict:
                 if document.capital_letter_dict[term]:  # if the term is upper is all corpus
                     if term.lower() in self.inverted_idx:
                         self.inverted_idx[term] = self.inverted_idx[term.lower()]
-                        del self.inverted_idx[term.lower()]"""
+                        del self.inverted_idx[term.lower()]
 
         time_to_merge = False
         # create new file of term_dict
         if len(document.term_dict) != 0:
+            # sort the dict
+            self.sorted_term_dict = collections.OrderedDict(sorted(document.term_dict.items()))
+            # empty term_dict
+            document.term_dict.clear()
             # make a txt file out of the term_dict
             with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
-                for p in document.term_dict.items():
-                    for str1 in p[1]:
-                        s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-100"
-                        fp.write(s + "\n")
+                for p in self.sorted_term_dict.items():
+                    if len(p[1]) > 1:  # more then 2 tweet_id
+                        for str1 in p[1]:
+                            s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-100"
+                            fp.write(s + "\n")
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
+            # empty sorted_term_dict
+            self.sorted_term_dict.clear()
             self.file_counter += 1
             time_to_merge = True
 
@@ -192,7 +201,6 @@ class Indexer:
 
 
     def create_inverted_index (self, file_name):
-
         with open(file_name, buffering=2000000, encoding='utf-8') as f:
             num_of_lines = 1
             posting_string = []
@@ -224,5 +232,7 @@ class Indexer:
                 print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 self.posting_file_num += 1
         os.remove(self.file_name_list[0])
+        self.finished_inverted = True
+
 
 

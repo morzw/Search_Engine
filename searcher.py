@@ -19,17 +19,22 @@ class Searcher:
         :param query: query
         :return: dictionary of relevant documents.
         """
-        posting = utils.load_obj("posting")
         relevant_docs = {}
         for term in query:
-            try: # an example of checks that you have to do
-                posting_doc = posting[term]
-                for doc_tuple in posting_doc:
-                    doc = doc_tuple[0]
-                    if doc not in relevant_docs.keys():
-                        relevant_docs[doc] = 1
-                    else:
-                        relevant_docs[doc] += 1
-            except:
-                print('term {} not found in posting'.format(term))
+            if term in self.inverted_index:
+                posting_file_name = self.inverted_index[term][0][1]
+                with open(posting_file_name, buffering=2000000, encoding='utf-8') as f:
+                    for line in f:
+                        term_list = line.split(":")
+                        key = term_list[0]
+                        value = term_list[1]
+                        if term == key:
+                            try:
+                                tweet_id = value.split("-")[0]
+                                if tweet_id not in relevant_docs.keys():
+                                    relevant_docs[tweet_id] = 1
+                                else:
+                                    relevant_docs[tweet_id] += 1
+                            except:
+                                print('term {} not found in posting'.format(term))
         return relevant_docs
