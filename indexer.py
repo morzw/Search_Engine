@@ -2,6 +2,9 @@ import collections
 import copy
 import os
 
+from configuration import ConfigClass
+from stemmer import Stemmer
+
 
 class Indexer:
 
@@ -105,14 +108,6 @@ class Indexer:
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
 
-        # Change all capital letter terms in dict
-        if self.finished_inverted:
-            for term in document.capital_letter_dict:
-                if document.capital_letter_dict[term]:  # if the term is upper is all corpus
-                    if term.lower() in self.inverted_idx:
-                        self.inverted_idx[term] = self.inverted_idx[term.lower()]
-                        del self.inverted_idx[term.lower()]
-
         time_to_merge = False
         # create new file of term_dict
         if len(document.term_dict) != 0:
@@ -146,6 +141,29 @@ class Indexer:
             print(self.file_name_list)
             # finished the big posting file
             self.create_inverted_index(self.file_name_list[0])
+
+        # Change all capital letter terms in dict
+        if self.finished_inverted:
+            config = ConfigClass()
+            to_stem = config.get__toStem()
+            for term in document.capital_letter_dict:
+                if document.capital_letter_dict[term]:  # if the term is upper is all corpus
+                    if not to_stem:
+                        if term.lower() in self.inverted_idx:
+                            self.inverted_idx[term] = self.inverted_idx[term.lower()]
+                            del self.inverted_idx[term.lower()]
+                    else:
+                        stem_term = Stemmer().stem_term(term)
+                        print(stem_term)
+                        print(term)
+                        if term.lower() != stem_term:
+                            if stem_term.lower() in self.inverted_idx:
+                                self.inverted_idx[stem_term.upper()] = self.inverted_idx[stem_term.lower()]
+                                #del self.inverted_idx[term.lower()]
+                        else:
+                            if stem_term.lower() in self.inverted_idx:
+                                self.inverted_idx[stem_term.upper()] = self.inverted_idx[stem_term.lower()]
+                                del self.inverted_idx[term.lower()]
 
     def read_non_empty_line(self, input):
         while True:
@@ -199,8 +217,7 @@ class Indexer:
         self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
         self.file_counter += 1
 
-
-    def create_inverted_index (self, file_name):
+    def create_inverted_index(self, file_name):
         with open(file_name, buffering=2000000, encoding='utf-8') as f:
             num_of_lines = 1
             posting_string = []
@@ -233,6 +250,7 @@ class Indexer:
                 self.posting_file_num += 1
         os.remove(self.file_name_list[0])
         self.finished_inverted = True
+
 
 
 

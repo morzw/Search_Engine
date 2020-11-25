@@ -444,12 +444,13 @@ class Parse:
         tokenized_text = self.parse_sentence(full_text, tweet_id)
         for term in tokenized_text:
             if term.isdigit() or len(term) > 1:
-                if term not in term_dict.keys():
-                    term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
-                else:
-                    term_dict[term][0] += 1
-                    term_dict[term][1].append(idx_in_tweet)
-                idx_in_tweet += 1
+                if not ( term == "!" or term == "##" or term == "#" or term == "~" or term == "#!" or term == "#%"):
+                    if term not in term_dict.keys():
+                        term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
+                    else:
+                        term_dict[term][0] += 1
+                        term_dict[term][1].append(idx_in_tweet)
+                    idx_in_tweet += 1
 
         doc_length = len(tokenized_text)  # after text operations.
 
@@ -457,7 +458,7 @@ class Parse:
         tokenized_url = self.parse_url(url)
         if len(tokenized_url) != 0:
             for term in tokenized_url:
-                if not (term == "http" or term == "https" or term == "t.co" or term == "!" or term == "#" or term == "~"):
+                if not (term == "http" or term == "https" or term == "t.co" or term == "!"or term == "##" or term == "#" or term == "~"):
                     if term not in term_dict.keys():
                         term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
                     else:

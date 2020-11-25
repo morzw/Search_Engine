@@ -9,6 +9,7 @@ from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
 import utils
+from stemmer import Stemmer
 
 
 def run_engine():
@@ -73,6 +74,8 @@ def load_index():
 
 
 def search_and_rank_query(queries, inverted_index, k):
+    config = ConfigClass()
+    to_stem = config.get__toStem()
     queries_list = []
     if type(queries) is list:  # if queries is a list
         for query in queries:
@@ -95,7 +98,11 @@ def search_and_rank_query(queries, inverted_index, k):
             len_term = 1
             word = original_query_list[counter]
             if word.isupper():  # NBA
-                query_as_list.append(word)
+                if not to_stem:
+                    query_as_list.append(word)
+                else:
+                    stem_word = Stemmer().stem_term(word)
+                    query_as_list.append(stem_word)
             elif len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper():  # upper first char
                 term = word
                 if original_query_list.index(word) + 1 < len(original_query_list):
@@ -118,9 +125,9 @@ def search_and_rank_query(queries, inverted_index, k):
         #print(relevant_docs)
         print("done")
 
-      #  if len(relevant_docs) > 0:
-     #       ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs)
-    #return searcher.ranker.retrieve_top_k(ranked_docs, k)
+        if len(relevant_docs) > 0:
+            ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs)
+    return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
 #def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
@@ -136,5 +143,5 @@ def main():
     #k = int(input("Please enter number of docs to retrieve: "))
     inverted_index = load_index()
     #for doc_tuple in search_and_rank_query(query, inverted_index, k):
-    for doc_tuple in search_and_rank_query(["A study from the CDC and the WHO “proves face masks do not prevent the spread of a virus.”", "Corona Virus is less NBA dangerous than the flu"], inverted_index, 5):
+    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 5):
         print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))

@@ -28,6 +28,8 @@ class Searcher:
                         term_list = line.split(":")
                         key = term_list[0]
                         value = term_list[1]
+                        if " " not in key:
+                            key = key.lower()
                         if term == key:
                             try:
                                 tweet_id = value.split("-")[0]
