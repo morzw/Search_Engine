@@ -29,4 +29,3 @@ class Document:
         self.distinct_words = distinct_words
         self.capital_letter_dict = capital_letter_dict
         self.term_dict = term_dict
-

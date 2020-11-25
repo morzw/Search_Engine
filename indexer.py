@@ -2,6 +2,7 @@ import collections
 import copy
 import os
 
+from LDA_ranker import LDA_ranker
 from configuration import ConfigClass
 from stemmer import Stemmer
 
@@ -12,6 +13,10 @@ class Indexer:
     file_counter = 1
     file_name_list = []
     finished_inverted = False
+    LDA_list = []
+    # LDA
+    tweet_line_dict = {}
+    line_number = 0
 
     def __init__(self, config):
         self.inverted_idx = {}
@@ -53,17 +58,27 @@ class Indexer:
         #         print('problem with the following key {}'.format(term[0]))
 
         # Go over each term in the doc
+        term_list_to_LDA = []
         if len(self.temp_posting_dict) < 100000:
             for term in document_dictionary.keys():
-                    try:
-                        # Update posting
-                        if term not in self.temp_posting_dict.keys():
-                            self.temp_posting_dict[term] = []
-                            self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
-                        else:
-                            self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
-                    except:
-                        print('problem with the following key {}'.format(term[0]))
+                try:
+                    # Update posting
+                    if term not in self.temp_posting_dict.keys():
+                        self.temp_posting_dict[term] = []
+                        self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+                    else:
+                        self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+                except:
+                    print('problem with the following key {}'.format(term[0]))
+                term_list_to_LDA.append(term)
+            self.LDA_list.append(term_list_to_LDA)  # add to LDA list
+            self.tweet_line_dict[document.tweet_id] = self.line_number  # tweet_id, line_num
+            self.line_number += 1
+                #term_list_to_LDA.append((term, document_dictionary[term][0]))
+            #self.LDA_list.append(term_list_to_LDA)  # add to LDA list
+
+
+
         else: # len(self.temp_posting_dict) == 100000
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
@@ -154,8 +169,6 @@ class Indexer:
                             del self.inverted_idx[term.lower()]
                     else:
                         stem_term = Stemmer().stem_term(term)
-                        print(stem_term)
-                        print(term)
                         if term.lower() != stem_term:
                             if stem_term.lower() in self.inverted_idx:
                                 self.inverted_idx[stem_term.upper()] = self.inverted_idx[stem_term.lower()]
@@ -164,6 +177,12 @@ class Indexer:
                             if stem_term.lower() in self.inverted_idx:
                                 self.inverted_idx[stem_term.upper()] = self.inverted_idx[stem_term.lower()]
                                 del self.inverted_idx[term.lower()]
+
+        if self.finished_inverted:
+            print(self.LDA_list[:20])
+            lda = LDA_ranker(self.LDA_list[:20])
+            lda.create_corpus()
+
 
     def read_non_empty_line(self, input):
         while True:

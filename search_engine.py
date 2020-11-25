@@ -3,6 +3,7 @@ from datetime import datetime
 
 from nltk.corpus import stopwords
 
+from LDA_ranker import LDA_ranker
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -75,6 +76,7 @@ def load_index():
 
 def search_and_rank_query(queries, inverted_index, k):
     config = ConfigClass()
+    indexer = Indexer(config)
     to_stem = config.get__toStem()
     queries_list = []
     if type(queries) is list:  # if queries is a list
@@ -98,6 +100,10 @@ def search_and_rank_query(queries, inverted_index, k):
             len_term = 1
             word = original_query_list[counter]
             if word.isupper():  # NBA
+                if word.find("\n") != -1:
+                    word = word[:-1]
+                    if word.find(".") != -1:
+                        word = word[:-1]
                 if not to_stem:
                     query_as_list.append(word)
                 else:
@@ -122,11 +128,22 @@ def search_and_rank_query(queries, inverted_index, k):
         print(query_as_list)
         searcher = Searcher(inverted_index)
         relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
-        #print(relevant_docs)
-        print("done")
-
+        print("relevant", len(relevant_docs))
+        topic = LDA_ranker.query_topic(query_as_list)
+        print("query_topic", topic)
+        list_of_index = []
+        for tweet in relevant_docs.keys():
+            list_of_index.append(indexer.tweet_line_dict[tweet])  # list of line numbers for LDA
+        same_topic_list = LDA_ranker.find_same_topic(list_of_index, topic)
+        list_of_relevant_tweet = []
+        for value in same_topic_list:
+            for key in indexer.tweet_line_dict:
+                if indexer.tweet_line_dict[key] == value:
+                    list_of_relevant_tweet.append(key)  # list of tweet_id
+        print("topic relevant", len(list_of_relevant_tweet))
         if len(relevant_docs) > 0:
-            ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs)
+            ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs, list_of_relevant_tweet)
+
     return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
@@ -143,5 +160,8 @@ def main():
     #k = int(input("Please enter number of docs to retrieve: "))
     inverted_index = load_index()
     #for doc_tuple in search_and_rank_query(query, inverted_index, k):
+    num = 1
     for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 5):
+        print(num)
         print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
+        num += 1

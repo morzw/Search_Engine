@@ -1,6 +1,5 @@
 from parser_module import Parse
 from ranker import Ranker
-import utils
 
 
 class Searcher:
