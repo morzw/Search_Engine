@@ -2,50 +2,81 @@ from pprint import pprint
 # Gensim
 import gensim
 import gensim.corpora as corpora
+import numpy as np
+from smart_open import open
+
+"""class MyCorpus:
+    def _iter_(self):
+        for line in open('LDA.txt'):
+            # assume there's one document per line, tokens separated by whitespace
+            yield self.id2word.doc2bow(line.lower().split())"""
 
 class LDA_ranker:
 
-    lda_model = []
+    lda_model = None
     corpus = []
     term_list = []
+    topic_dict = {}
+    cosine_dict = {}
+    id2word = None
 
     def __init__(self, term_list1=[]):
         self.term_list = term_list1
 
-    # def get__term_list(self):
-    #     return self.term_list
-    # def get__term_list(self):
-    #     return self.term_list
-    # def  get__corpus(self):
-    #     return self.corpus
-    # def  get__lda_model(self):
-    #     return self.lda_model
+    """def iter(self):
+        with open('LDA.txt', buffering=2000000, encoding='utf-8') as f:
+            for line in f:
+                lst = line.split(" ")
+                print(lst)
+                yield self.id2word.doc2bow(lst, allow_update=True)"""
+
+        # for line in open('LDA.txt'):
+        #     # assume there's one document per line, tokens separated by whitespace
+        #     yield self.id2word.doc2bow(line.lower().split(" "))
 
     def create_corpus(self):
+        self.id2word = corpora.Dictionary(self.term_list)
+        # self.corpus = MyCorpus()
+        #self.corpus = self._iter_()
         # Create Dictionary
-        id2word = corpora.Dictionary(self.term_list)
+        #id2word = corpora.Dictionary(self.term_list)
         # Create Corpus
         texts = self.term_list
         # Term Document Frequency
-        self.corpus = [id2word.doc2bow(text) for text in texts]
+        self.corpus = [self.id2word.doc2bow(text) for text in texts]
+        #for line in texts:
+        #    self.corpus.append(id2word.doc2bow(line, allow_update=True))
         # View
-        print(self.corpus[:20])
 
         # Human readable format of corpus (term-frequency)
         # [[(id2word[id], freq) for id, freq in cp] for cp in corpus[:1]]
 
-        self.build_LDA_model(id2word)
+        self.build_LDA_model(self.id2word)
 
     def build_LDA_model(self, id2word):
-        self.lda_model = gensim.models.ldamodel.LdaModel(corpus=self.corpus,
-                                                         id2word=id2word,
+        """self.lda_model = gensim.models.ldamodel.LdaModel(corpus=self.corpus,
+                                                         id2word=self.id2word,
                                                          num_topics=10,
                                                          random_state=100,
                                                          update_every=1,
                                                          chunksize=100,
                                                          passes=10,
                                                          alpha='auto',
-                                                         per_word_topics=True)
+                                                         per_word_topics=True)"""
+        self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=5, id2word=self.id2word,minimum_probability=0)
+        for i in range(10):  # start the dict
+            self.topic_dict[i] = []
+
+        for tweet_idx in range(5000):  # every tweet prop>0.7 in topic list in dict
+            topic_vector = self.lda_model[self.corpus[tweet_idx]]
+            for topic_num, prob in topic_vector:
+                if prob > 0.7:
+                    self.topic_dict[topic_num].append(tweet_idx)
+
+        """print("print of shahar", self.corpus[0])
+        for index, score in sorted(self.lda_model[self.corpus[0]], key=lambda tup: -1 * tup[1]):
+            print("\nScore: {}\t \nTopic: {}".format(score, self.lda_model.print_topic(index, 10)))"""
+
         self.print_LDA_model()
 
     def print_LDA_model(self):
@@ -53,21 +84,47 @@ class LDA_ranker:
         pprint(self.lda_model.print_topics())
         new_text = ['Coronavirus', 'less', 'dangerous', 'flu']
         temp = corpora.Dictionary([new_text])
-        print("number1:", self.lda_model[self.corpus[0]][0][0])
-        print("number1:", self.lda_model[self.corpus[0]][0][0][0])
-        print("number1:", self.lda_model[self.corpus[0]][0][0][1])
-        print("number2:", self.lda_model[temp.doc2bow(new_text)][0][0][0])
+        """print("tweet_topic_vector", self.lda_model[self.corpus[0]])
+        print("topic:", self.lda_model[self.corpus[0]][0][0])
+        print("prob:", self.lda_model[self.corpus[0]][0][1])
+        print("query_vector:", self.lda_model[temp.doc2bow(new_text)])
+        print("query_tupel:", self.lda_model[temp.doc2bow(new_text)][0])
+        print("query_topic:", self.lda_model[temp.doc2bow(new_text)][0][0])
+        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])"""
 
-    def query_topic(self, query_as_list):
-        print("corpus", len(self.corpus))
-        temp = corpora.Dictionary([query_as_list])
-        print(query_as_list)
-        return self.lda_model[temp.doc2bow(query_as_list)][0][0][0]
+    # Function to sort the list of tuples by its second item
+    def Sort_Tuple(self, query_vector):
+        lst = len(query_vector)
+        for i in range(0, lst):
+            for j in range(0, lst - i - 1):
+                if (query_vector[j][1] > query_vector[j + 1][1]):
+                    temp = query_vector[j]
+                    query_vector[j] = query_vector[j + 1]
+                    query_vector[j + 1] = temp
+        return query_vector
 
-    def find_same_topic(self, list_of_lines, topic):
-        list_of_index = []
-        print(list_of_lines)
-        for index in list_of_lines:
-            if topic == self.lda_model[self.corpus[index]][0][0][0]:
-                list_of_index.append(index)
-        return list_of_index
+    def prob(self, query_as_list):
+        token = corpora.Dictionary([query_as_list])
+        # query_vector = self.lda_model[token]
+        query_vector = self.lda_model[token.doc2bow(query_as_list)]
+        sorted_vector = self.Sort_Tuple(query_vector)
+        query_topic = sorted_vector[0][0]
+        print("query_topic", query_topic)
+        query_prob_vector = []
+        for tuple in sorted_vector:
+            query_prob_vector.append(tuple[1])
+        for index in self.topic_dict[query_topic]:
+            topic_vector = self.lda_model[self.corpus[index]]
+            index_prob_vec = []
+            for topic in topic_vector:
+                index_prob_vec.append(topic[1])
+            cosine = self.cosine(query_prob_vector, index_prob_vec)
+            self.cosine_dict[index] = cosine  # index-cosine dict
+        sorted_cosine_dict = {k: v for k, v in sorted(self.cosine_dict.items(), key=lambda item: item[1], reverse=True)}
+        return sorted_cosine_dict
+
+    def cosine(self, query_prob_vector, index_prob_vec):
+        v1 = np.array(query_prob_vector)
+        v2 = np.array(index_prob_vec)
+        cosine = np.dot(v1, v2) / (np.sqrt(np.sum(v1 * 2)) * np.sqrt(np.sum(v2 * 2)))
+        return cosine

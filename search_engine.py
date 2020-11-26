@@ -93,7 +93,6 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         original_query_list = query.split(" ")
         stop_words = stopwords.words('english')
         original_query_list = [w for w in original_query_list if w not in stop_words]
-        print(original_query_list)
 
         counter = 0
         while counter < len(original_query_list):  # find big terms
@@ -125,28 +124,42 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                     if len_term > 1:
                         query_as_list.append(term)
             counter += len_term
-        print(query_as_list)
         searcher = Searcher(inverted_index)
         relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
-        print("relevant", len(relevant_docs))
-        topic = lda.query_topic(query_as_list)
-        # topic = LDA_ranker.query_topic(query_as_list)
-        print("query_topic", topic)
-        list_of_index = []
-        for tweet in relevant_docs.keys():
-            list_of_index.append(indexer.tweet_line_dict[tweet])  # list of line numbers for LDA
-        same_topic_list = lda.find_same_topic(list_of_index, topic)
-        # same_topic_list = LDA_ranker.find_same_topic(list_of_index, topic)
-        list_of_relevant_tweet = []
-        for value in same_topic_list:
-            for key in indexer.tweet_line_dict:
-                if indexer.tweet_line_dict[key] == value:
-                    list_of_relevant_tweet.append(key)  # list of tweet_id
-        print("topic relevant", len(list_of_relevant_tweet))
-        if len(relevant_docs) > 0:
-            ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs, list_of_relevant_tweet)
+        #print("relevant", len(relevant_docs))
+        print(query_as_list)
+        dict_of_relevant_tweet = lda.prob(query_as_list)
+        list_of_cosine_tweets= []
+        for key in dict_of_relevant_tweet.keys():
+            for tweet, value in indexer.tweet_line_dict.items():
+                if key == value:
+                    list_of_cosine_tweets.append(tweet)  # list of tweet_id
+        print("finish_topic relevant", len(list_of_cosine_tweets))
+        #if len(relevant_docs) > 0:
+        #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
+        sorted_relevant_docs = {k: v for k, v in sorted(relevant_docs.items(), key=lambda item: item[1], reverse=True)}
+        print("relevant", sorted_relevant_docs)
 
-    return searcher.ranker.retrieve_top_k(ranked_docs, k)
+        final_tweets = []
+        for tweet in sorted_relevant_docs.keys():
+            if tweet in list_of_cosine_tweets:
+                final_tweets.append(tweet)
+
+        for tweet in final_tweets:
+            if tweet in sorted_relevant_docs:
+                del sorted_relevant_docs[tweet]
+
+        if len(final_tweets) < k:
+            for key in sorted_relevant_docs:
+                if k > len(final_tweets):
+                    final_tweets.append(key)
+                else:
+                    break
+        print(final_tweets)
+
+    cn = datetime.now()
+    print(cn)
+    return searcher.ranker.retrieve_top_k(final_tweets, k)
 
 
 #def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
@@ -163,7 +176,8 @@ def main():
     inverted_index = load_index()
     #for doc_tuple in search_and_rank_query(query, inverted_index, k):
     num = 1
-    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 5, lda):
+    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 50, lda):
         print(num)
-        print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
+        print(doc_tuple)
+        #print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
         num += 1

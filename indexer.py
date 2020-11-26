@@ -42,21 +42,6 @@ class Indexer:
         self.tfidfDict[tweet_id] = []
         self.tfidfDict[tweet_id].append((document.max_tf, document.distinct_words))
 
-        # # Go over each term in the doc
-        # for term in document_dictionary.keys():
-        #     try:
-        #         # Update inverted index and posting
-        #         if term not in self.inverted_idx.keys():
-        #             self.inverted_idx[term] = 1
-        #             self.postingDict[term] = []
-        #         else:
-        #             self.inverted_idx[term] += 1
-        #
-        #         self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
-        #
-        #     except:
-        #         print('problem with the following key {}'.format(term[0]))
-
         # Go over each term in the doc
         term_list_to_LDA = []
         if len(self.temp_posting_dict) < 100000:
@@ -74,10 +59,6 @@ class Indexer:
             self.LDA_list.append(term_list_to_LDA)  # add to LDA list
             self.tweet_line_dict[document.tweet_id] = self.line_number  # tweet_id, line_num
             self.line_number += 1
-                #term_list_to_LDA.append((term, document_dictionary[term][0]))
-            #self.LDA_list.append(term_list_to_LDA)  # add to LDA list
-
-
 
         else: # len(self.temp_posting_dict) == 100000
             # copy temp_posting_dict
@@ -179,8 +160,14 @@ class Indexer:
                                 del self.inverted_idx[term.lower()]
 
         if self.finished_inverted:
+            with open('LDA.txt', 'w', encoding='utf-8') as fp:
+                for p in self.LDA_list:
+                    s = ""
+                    for term in p:
+                        s += term+" "
+                    fp.write(s + "\n")
             #print(self.LDA_list)
-            lda = LDA_ranker(self.LDA_list)
+            lda = LDA_ranker(self.LDA_list[:5000])
             lda.create_corpus()
             return lda
 
