@@ -179,9 +179,10 @@ class Indexer:
                                 del self.inverted_idx[term.lower()]
 
         if self.finished_inverted:
-            print(self.LDA_list[:20])
-            lda = LDA_ranker(self.LDA_list[:20])
+            #print(self.LDA_list)
+            lda = LDA_ranker(self.LDA_list)
             lda.create_corpus()
+            return lda
 
 
     def read_non_empty_line(self, input):

@@ -9,11 +9,17 @@ class LDA_ranker:
     corpus = []
     term_list = []
 
-    def __init__(self, term_list1):
+    def __init__(self, term_list1=[]):
         self.term_list = term_list1
 
-    # def set__term_list(term_list):
-    #     term_list = term_list
+    # def get__term_list(self):
+    #     return self.term_list
+    # def get__term_list(self):
+    #     return self.term_list
+    # def  get__corpus(self):
+    #     return self.corpus
+    # def  get__lda_model(self):
+    #     return self.lda_model
 
     def create_corpus(self):
         # Create Dictionary
@@ -53,14 +59,14 @@ class LDA_ranker:
         print("number2:", self.lda_model[temp.doc2bow(new_text)][0][0][0])
 
     def query_topic(self, query_as_list):
-        print(len(self.corpus))
-        print(len(self.lda_model))
+        print("corpus", len(self.corpus))
         temp = corpora.Dictionary([query_as_list])
         print(query_as_list)
         return self.lda_model[temp.doc2bow(query_as_list)][0][0][0]
 
     def find_same_topic(self, list_of_lines, topic):
         list_of_index = []
+        print(list_of_lines)
         for index in list_of_lines:
             if topic == self.lda_model[self.corpus[index]][0][0][0]:
                 list_of_index.append(index)

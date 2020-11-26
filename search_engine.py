@@ -61,12 +61,12 @@ def run_engine():
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
         # index the document data
-        indexer.add_new_doc(parsed_document)
+        lda = indexer.add_new_doc(parsed_document)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.tfidfDict, "tfidfDict")
-
+    return lda
 
 def load_index():
     print('Load inverted index')
@@ -74,7 +74,7 @@ def load_index():
     return inverted_index
 
 
-def search_and_rank_query(queries, inverted_index, k):
+def search_and_rank_query(queries, inverted_index, k, lda):
     config = ConfigClass()
     indexer = Indexer(config)
     to_stem = config.get__toStem()
@@ -129,12 +129,14 @@ def search_and_rank_query(queries, inverted_index, k):
         searcher = Searcher(inverted_index)
         relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
         print("relevant", len(relevant_docs))
-        topic = LDA_ranker.query_topic(query_as_list)
+        topic = lda.query_topic(query_as_list)
+        # topic = LDA_ranker.query_topic(query_as_list)
         print("query_topic", topic)
         list_of_index = []
         for tweet in relevant_docs.keys():
             list_of_index.append(indexer.tweet_line_dict[tweet])  # list of line numbers for LDA
-        same_topic_list = LDA_ranker.find_same_topic(list_of_index, topic)
+        same_topic_list = lda.find_same_topic(list_of_index, topic)
+        # same_topic_list = LDA_ranker.find_same_topic(list_of_index, topic)
         list_of_relevant_tweet = []
         for value in same_topic_list:
             for key in indexer.tweet_line_dict:
@@ -155,13 +157,13 @@ def main():
     # config.set__savedFileMainFolder( output_path)
     # k = num_docs_to_retrieve
     # query = queries
-    run_engine()
+    lda = run_engine()
     #query = input("Please enter a query: ")
     #k = int(input("Please enter number of docs to retrieve: "))
     inverted_index = load_index()
     #for doc_tuple in search_and_rank_query(query, inverted_index, k):
     num = 1
-    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 5):
+    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 5, lda):
         print(num)
         print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
         num += 1
