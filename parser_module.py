@@ -19,12 +19,12 @@ class Parse:
         self.to_stem = ConfigClass().get__toStem()
 
     def parse_term(self, tokenized_text, tweet_id):
+        # Term Dict + Capital Letter Dict:
 
-        # END OF CORPUS
+        # END OF CORPUS - send dicts
         if tweet_id == "1291687810479591424":
             self.finished = True
 
-        #Term Dict + Capital Letter Dict:
         counter = 0
         while counter < len(tokenized_text):
             len_term = 1
@@ -56,7 +56,6 @@ class Parse:
                             new_word2 = ''.join([i if ord(i) < 128 else '' for i in new_word2])# delete emoji
                             term += " " + new_word2
                             original_term += " " + original_word
-
                             index += 1
                             len_term += 1
                         else:
@@ -99,10 +98,11 @@ class Parse:
         :param text:
         :return:
         """
-        #print(text)
+        # print(text)
         text_tokens = word_tokenize(text)
-        #print(text_tokens)
-        if "@" in text_tokens:  # find TAGS
+##############################################################################################
+        # find TAGS
+        if "@" in text_tokens:
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
             counter = 0
             for index in index_list1:
@@ -120,12 +120,13 @@ class Parse:
                         del text_tokens[rmv_index + 1]
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('@')
-        if "%" or "percent" or "Percent" or "percentage" or "Percentage" in text_tokens:  # find PERCENTAGES
+##############################################################################################
+        # find PERCENTAGES
+        if "%" or "percent" or "Percent" or "percentage" or "Percentage" in text_tokens:
             index_list2 = [n for n, x in enumerate(text_tokens) if x == '%' or x == 'percent' or x == "percentage" or x == 'Percent' or x == "Percentage"]
             counter2 = 0
             for index in index_list2:
                 if index - 1 >= 0:
-                    #TODO: what before % if text_tokens[index - 1]:
                     if not re.search('[a-zA-Z]', text_tokens[index - 1]):
                         new_term = text_tokens[index - 1] + '%'
                         text_tokens.append(new_term)
@@ -140,10 +141,11 @@ class Parse:
                     del text_tokens[rmv_index]
                     del text_tokens[rmv_index - 1]
                 counter2 -= 1
-
-        self.parse_term(text_tokens, tweet_id)  #finding terms, entities and capital letter
-
-        #NUMBERS
+##############################################################################################
+        # finding terms, entities and capital letter
+        self.parse_term(text_tokens, tweet_id)
+##############################################################################################
+        # find NUMBERS
         numbers = []
         for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
             if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3}){0,6}$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
@@ -153,8 +155,8 @@ class Parse:
                         numbers.append(item)
                     elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
                         numbers.append(item)
-        #if len(numbers) >0:
-        #    print(numbers)
+        # if len(numbers) >0:
+        #     print(numbers)
         fractions_list = []
         for num in numbers:
             occur = num.count('.')
@@ -268,8 +270,9 @@ class Parse:
                           x != " " and x != ".." and x != "..." and x != "...." and x != "....." and x != "......" and
                           x != "``" and x != "''" and x != "'s" and x != "'m" and x != "n't" and x != "." and x != ""
                           and x != "'re" and x != "__" and x != "_" and x != "___" and x != "," and x != "!"]"""
-        # punctuations
-        new_words = []
+##############################################################################################
+        # find punctuations
+        """new_words = []
         for word in text_tokens:
             word = re.sub('t.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|^http.*|^https.*|^RT$|^rt$',
                 '', word, flags=re.IGNORECASE)
@@ -277,10 +280,29 @@ class Parse:
             if word == '' or word == ' ' or len(word) == 1:
                 continue
             new_words.append(word)
-        text_tokens = new_words
+        text_tokens = new_words"""
+        new_words = []
+        regex_pattern_for_num = '.*\d\.\d.*'
+        regex_pattern_for_punctuation = 't.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|http.*|https.*|^RT$|^rt$'
 
+        for word in text_tokens:
+            # if term is a number in form ...d.d.. exp 230.3K - add to list
+            if re.match(regex_pattern_for_num, word):
+                new_words.append(word)
+                continue
+            # else - remove all punctuation from the term
+            else:
+                word = re.sub(regex_pattern_for_punctuation, '', word, flags=re.IGNORECASE)
+                word = ''.join([i if ord(i) < 128 else '' for i in word])
+                if word == '' or word == ' ':
+                    continue
+
+            new_words.append(word)
+        text_tokens = new_words
+##############################################################################################
+        # find HASHTAGS
         # TODO: #whereIsKCR combined
-        if "#" in text_tokens:  # find HASHTAGS
+        if "#" in text_tokens:
             index_list3 = [n for n, x in enumerate(text_tokens) if x == '#']
             for index in index_list3:
                 if index + 1 < len(text_tokens):
@@ -292,8 +314,6 @@ class Parse:
                 rmv_index = text_tokens.index('#')
                 if rmv_index + 1 < len(text_tokens) and text_tokens[rmv_index + 1] != '#'\
                         and text_tokens[rmv_index + 1][0] != '@' and text_tokens[rmv_index + 1].find("#") == -1:
-                    #print(text_tokens)
-                    #print(text_tokens[rmv_index + 1][0])
                     word_val = text_tokens[rmv_index + 1]
                     if not word_val.isupper() and not word_val.islower() and word_val.find('_') == -1:  # split uppercase
                         list_of_words = re.findall('[A-Z][^A-Z]*', word_val)
@@ -380,13 +400,16 @@ class Parse:
                             text_tokens[rmv_index] = " "  # remove num from list
                     else:
                         text_tokens.append(new_num)"""
-
-        text_tokens.extend(fractions_list)  # add fractions
-
+##############################################################################################
+        # add fractions
+        text_tokens.extend(fractions_list)
+##############################################################################################
+        # remove stop_words
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         # print(text_tokens)
-        #print(text_tokens_without_stopwords)
-
+        # print(text_tokens_without_stopwords)
+##############################################################################################
+        # if stemmer
         if self.to_stem:
             stem_text_tokens_without_stopwords = []
             for token in text_tokens_without_stopwords:
@@ -453,19 +476,21 @@ class Parse:
                     idx_in_tweet += 1
 
         doc_length = len(tokenized_text)  # after text operations.
-
         # url tokenized
         tokenized_url = self.parse_url(url)
         if len(tokenized_url) != 0:
             for term in tokenized_url:
-                if not (term == "http" or term == "https" or term == "t.co" or term == "!"or term == "##" or term == "~r" or term == "#" or term == "~"):
-                    if term not in term_dict.keys():
-                        term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
-                    else:
-                        term_dict[term][0] += 1
-                        term_dict[term][1].append(idx_in_tweet)
-                    idx_in_tweet += 1
-        #print(full_text)
+                if term.find(".") != -1:
+                    if not (term == "http" or term == "https" or term == "t.co" or term == "!"or term == "##" or term == "~r" or term == "#" or term == "~"):
+                        if term not in term_dict.keys():
+                            term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
+                        else:
+                            term_dict[term][0] += 1
+                            term_dict[term][1].append(idx_in_tweet)
+                        idx_in_tweet += 1
+
+
+
         #print(term_dict)
         #print(tokenized_text)
 

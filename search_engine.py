@@ -65,7 +65,7 @@ def run_engine():
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
-    utils.save_obj(indexer.tfidfDict, "tfidfDict")
+    utils.save_obj(indexer.tf_idf_dict, "tf_idf_dict")
     return lda
 
 def load_index():
@@ -86,16 +86,19 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         with open(queries, encoding='utf-8') as f:
             for line in f:
                 queries_list.append(line)
+
+    query_num = 1
+    tweet_id_num = 1
     for query in queries_list:
         p = Parse()
+        # parse the query
         query_as_list = p.parse_sentence(query, 0)
-        # adds upper case words to the query
         original_query_list = query.split(" ")
         stop_words = stopwords.words('english')
         original_query_list = [w for w in original_query_list if w not in stop_words]
-
+        # find long terms and upper case words
         counter = 0
-        while counter < len(original_query_list):  # find big terms
+        while counter < len(original_query_list):
             len_term = 1
             word = original_query_list[counter]
             if word.isupper():  # NBA
@@ -124,22 +127,27 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                     if len_term > 1:
                         query_as_list.append(term)
             counter += len_term
-        searcher = Searcher(inverted_index)
-        relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
-        #print("relevant", len(relevant_docs))
+
         print(query_as_list)
+        searcher = Searcher(inverted_index)
+        # find relevant_docs
+        relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
+        print("relevant", len(relevant_docs))
+        # find LDA relevant
         dict_of_relevant_tweet = lda.prob(query_as_list)
-        list_of_cosine_tweets= []
+        print("cosine dict", len(dict_of_relevant_tweet))
+        # list of tweet_id with high cosine
+        list_of_cosine_tweets = []
         for key in dict_of_relevant_tweet.keys():
             for tweet, value in indexer.tweet_line_dict.items():
                 if key == value:
-                    list_of_cosine_tweets.append(tweet)  # list of tweet_id
+                    list_of_cosine_tweets.append(tweet)
         print("finish_topic relevant", len(list_of_cosine_tweets))
         #if len(relevant_docs) > 0:
         #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
         sorted_relevant_docs = {k: v for k, v in sorted(relevant_docs.items(), key=lambda item: item[1], reverse=True)}
-        print("relevant", sorted_relevant_docs)
-
+        #print("relevant", sorted_relevant_docs)
+        # find similar relevant_tweet - cosine_relevant
         final_tweets = []
         for tweet in sorted_relevant_docs.keys():
             if tweet in list_of_cosine_tweets:
@@ -155,15 +163,32 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                     final_tweets.append(key)
                 else:
                     break
-        print(final_tweets)
 
+        # write the results into file
+        tweet_id_num = 1
+        s = ""
+        with open('results.csv', 'a', encoding='utf-8') as fp:
+            for p in final_tweets:
+                if tweet_id_num <= k:
+                    if tweet_id_num == 1:
+                        s = ("Query number " + str(query_num) + ":" + "\n")
+                    if tweet_id_num < k:
+                        s += ("Tweet rank " + str(tweet_id_num) + ":" + "\n" + p + "\n")
+                    if tweet_id_num == k:
+                        s += ("Tweet rank " + str(tweet_id_num) + ":" + "\n" + p + "\n" + "\n")
+                    tweet_id_num += 1
+            fp.write(s)
+        query_num += 1
     cn = datetime.now()
     print(cn)
+
+    # return tok K of final_tweets
     return searcher.ranker.retrieve_top_k(final_tweets, k)
 
 
 #def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
 def main():
+    print("Start program")
     # config = ConfigClass()
     # config.set__toStem(stemming)
     # config.set__corpusPath(corpus_path)
@@ -176,7 +201,7 @@ def main():
     inverted_index = load_index()
     #for doc_tuple in search_and_rank_query(query, inverted_index, k):
     num = 1
-    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 50, lda):
+    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 5, lda):
         print(num)
         print(doc_tuple)
         #print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))

@@ -67,30 +67,26 @@ class LDA_ranker:
         for i in range(10):  # start the dict
             self.topic_dict[i] = []
 
-        for tweet_idx in range(5000):  # every tweet prop>0.7 in topic list in dict
+        for tweet_idx in range(15000):  # every tweet prop>0.7 in topic list in dict
             topic_vector = self.lda_model[self.corpus[tweet_idx]]
             for topic_num, prob in topic_vector:
                 if prob > 0.7:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        """print("print of shahar", self.corpus[0])
-        for index, score in sorted(self.lda_model[self.corpus[0]], key=lambda tup: -1 * tup[1]):
-            print("\nScore: {}\t \nTopic: {}".format(score, self.lda_model.print_topic(index, 10)))"""
-
-        self.print_LDA_model()
+        #self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics
         pprint(self.lda_model.print_topics())
         new_text = ['Coronavirus', 'less', 'dangerous', 'flu']
         temp = corpora.Dictionary([new_text])
-        """print("tweet_topic_vector", self.lda_model[self.corpus[0]])
+        print("tweet_topic_vector", self.lda_model[self.corpus[0]])
         print("topic:", self.lda_model[self.corpus[0]][0][0])
         print("prob:", self.lda_model[self.corpus[0]][0][1])
         print("query_vector:", self.lda_model[temp.doc2bow(new_text)])
         print("query_tupel:", self.lda_model[temp.doc2bow(new_text)][0])
         print("query_topic:", self.lda_model[temp.doc2bow(new_text)][0][0])
-        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])"""
+        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])
 
     # Function to sort the list of tuples by its second item
     def Sort_Tuple(self, query_vector):
@@ -109,19 +105,19 @@ class LDA_ranker:
         query_vector = self.lda_model[token.doc2bow(query_as_list)]
         sorted_vector = self.Sort_Tuple(query_vector)
         query_topic = sorted_vector[0][0]
-        print("query_topic", query_topic)
+        # print("query_topic", query_topic)
         query_prob_vector = []
         for tuple in sorted_vector:
             query_prob_vector.append(tuple[1])
+        cosine_dict = {}
         for index in self.topic_dict[query_topic]:
             topic_vector = self.lda_model[self.corpus[index]]
             index_prob_vec = []
             for topic in topic_vector:
                 index_prob_vec.append(topic[1])
             cosine = self.cosine(query_prob_vector, index_prob_vec)
-            self.cosine_dict[index] = cosine  # index-cosine dict
-        sorted_cosine_dict = {k: v for k, v in sorted(self.cosine_dict.items(), key=lambda item: item[1], reverse=True)}
-        return sorted_cosine_dict
+            cosine_dict[index] = cosine  # index-cosine dict
+        return cosine_dict
 
     def cosine(self, query_prob_vector, index_prob_vec):
         v1 = np.array(query_prob_vector)
