@@ -5,6 +5,7 @@ import os
 from LDA_ranker import LDA_ranker
 from configuration import ConfigClass
 from stemmer import Stemmer
+from multiprocessing import Lock, Manager
 
 
 class Indexer:
@@ -17,9 +18,13 @@ class Indexer:
     # LDA
     tweet_line_dict = {}
     line_number = 0
+    lda = None
+    lock = Lock()
 
     def __init__(self, config):
         self.inverted_idx = {}
+        manager = Manager()
+        self.temp_posting_dict = manager.dict()
         self.temp_posting_dict = {}
         self.copy_posting_dict = {}
         self.sorted_posting_dict = {}
@@ -31,6 +36,7 @@ class Indexer:
         """
         This function perform indexing process for a document object.
         Saved information is captures via two dictionaries ('inverted index' and 'posting')
+        :param lock:
         :param capital_letter_dict:
         :param document: a document need to be indexed.
         :return: -
@@ -61,6 +67,7 @@ class Indexer:
             self.line_number += 1
 
         else:  # len(self.temp_posting_dict) == 500000
+            self.lock.acquire()
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
             # empty temp_posting_dict
@@ -81,8 +88,18 @@ class Indexer:
             self.sorted_posting_dict.clear()
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
+            # write the corpus to the disk
+            with open('LDA.txt', 'a', encoding='utf-8') as fp:
+                for p in self.LDA_list:
+                    s = ""
+                    for term in p:
+                        s += term+" "
+                    fp.write(s + "\n")
+            self.LDA_list.clear()
+            self.lock.release()
 
         if len(document.term_dict) != 0 and len(self.temp_posting_dict) > 0:
+            self.lock.acquire()
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
             # empty temp_posting_dict
@@ -103,6 +120,17 @@ class Indexer:
             self.sorted_posting_dict.clear()
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
             self.file_counter += 1
+            # write the corpus to the disk
+            with open('LDA.txt', 'a', encoding='utf-8') as fp:
+                for p in self.LDA_list:
+                    s = ""
+                    for term in p:
+                        s += term+" "
+                    fp.write(s + "\n")
+            self.LDA_list.clear()
+            self.lock.release()
+
+
 
         time_to_merge = False
         # create new file of term_dict
@@ -146,8 +174,6 @@ class Indexer:
                         if term.lower() in self.inverted_idx:
                             self.inverted_idx[term] = self.inverted_idx[term.lower()]
                             del self.inverted_idx[term.lower()]
-                            print(term)
-
                     else:
                         stem_term = Stemmer().stem_term(term)
                         if term.lower() != stem_term:
@@ -162,16 +188,6 @@ class Indexer:
         if self.finished_inverted:
             #TODO: insert long term !!!!!!!!!!!!!!!!!!!
             # insert long terms into LDA_list
-            """for term in document.term_dict: 
-                for ID in document.term_dict[term]:
-                    tweet_id = ID[0]
-                    # print("ID", ID)
-                    # print("ID[0]", ID[0])
-                    # print("index", self.tweet_line_dict[tweet_id])
-                    index = self.tweet_line_dict[tweet_id]
-                    self.LDA_list[index].append(term)"""
-            # empty term_dict
-            document.term_dict.clear()
             # write LDA_list into file
             """with open('LDA.txt', 'w', encoding='utf-8') as fp:
                 for p in self.LDA_list:
@@ -179,10 +195,29 @@ class Indexer:
                     for term in p:
                         s += term+" "
                     fp.write(s + "\n")"""
-            # start LDA ranker
-            lda = LDA_ranker(self.LDA_list[:15000])
-            lda.create_corpus()
-            return lda
+            # read the corpus from file
+            with open('LDA.txt', buffering=2000000, encoding='utf-8') as f:
+                for line in f:
+                    sp_line = line.split(" ")
+                    self.LDA_list.append(sp_line)
+            os.remove('LDA.txt')
+            # add long term into LDA list
+            for term in document.term_dict:
+                for ID in document.term_dict[term]:
+                    tweet_id = ID[0]
+                    # print("ID", ID)
+                    # print("ID[0]", ID[0])
+                    # print("index", self.tweet_line_dict[tweet_id])
+                    index = self.tweet_line_dict[tweet_id]
+                    self.LDA_list[index].append(term)
+            # empty term_dict
+            document.term_dict.clear()
+            self.lda = LDA_ranker(self.LDA_list)  # start LDA ranker
+            self.lda.create_corpus()
+            #return lda
+
+    def get__lad__(self):
+        return self.lda
 
     def read_non_empty_line(self, file):
         while True:

@@ -31,11 +31,13 @@ class Searcher:
                             key = key.lower()
                         if term == key:
                             try:
-                                tweet_id = value.split("-")[0]
+                                split = value.split("-")
+                                tweet_id = split[0]
+                                occur = split[1]
                                 if tweet_id not in relevant_docs.keys():
-                                    relevant_docs[tweet_id] = 1
+                                    relevant_docs[tweet_id] = int(occur)
                                 else:
-                                    relevant_docs[tweet_id] += 1
+                                    relevant_docs[tweet_id] += int(occur)
                             except:
                                 print('term {} not found in posting'.format(term))
         return relevant_docs

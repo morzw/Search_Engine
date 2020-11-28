@@ -1,9 +1,7 @@
 import re
 from datetime import datetime
-
 from nltk.corpus import stopwords
-
-from LDA_ranker import LDA_ranker
+from multiprocessing import Process, Lock
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -22,35 +20,26 @@ def run_engine():
     config = ConfigClass()
     corpus_path = config.get__corpusPath()
     r = ReadFile(corpus_path)
-    p = Parse()
     indexer = Indexer(config)
+    p = Parse()
 
     #reading per folder
     r.create_files_name_list()
-    files_list = [] #every index contains all tweets per folder
+    files_list = []  # every index contains all tweets per folder
     for file_name in r.dates_list:
         tweets_per_date = r.read_file(file_name)
         files_list.append(tweets_per_date)
-    #print(len(files_list))
 
     """counter = 1
+    procs = []
     # Iterate over every folder in the DATA
     for folder_list in files_list:
-        print(counter)
-        cr = datetime.now()
-        print(cr)
-        # Iterate over every tweet in the folder
-        for idx, tweet in enumerate(folder_list):
-            # parse the tweet
-            parsed_document = p.parse_doc(tweet)
-            number_of_documents += 1
-            # index the tweet data
-            indexer.add_new_doc(parsed_document)
-
-        print("number of tweets", number_of_documents)
-        cn = datetime.now()
-        print(cn)
-        counter += 1
+        proc = Process(target=test, args=(folder_list, counter, indexer, number_of_documents,))
+        procs.append(proc)
+        proc.start()
+    # complete the processes
+    for proc in procs:
+        proc.join()
     print('Finished parsing and indexing. Starting to export files')"""
 
     #read only one folder
@@ -61,12 +50,31 @@ def run_engine():
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
         # index the document data
-        lda = indexer.add_new_doc(parsed_document)
+        indexer.add_new_doc(parsed_document)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.tf_idf_dict, "tf_idf_dict")
-    return lda
+    return indexer.get__lad__()
+
+
+def test(folder_list, counter, indexer, number_of_documents):
+    print(counter)
+    cr = datetime.now()
+    print(cr)
+    p = Parse()
+    # Iterate over every tweet in the folder
+    for idx, tweet in enumerate(folder_list):
+        # parse the tweet
+        parsed_document = p.parse_doc(tweet)
+        number_of_documents += 1
+        # index the tweet data
+        indexer.add_new_doc(parsed_document)
+
+    print("number of tweets", number_of_documents)
+    cn = datetime.now()
+    print(cn)
+    counter += 1
 
 def load_index():
     print('Load inverted index')
@@ -146,7 +154,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         #if len(relevant_docs) > 0:
         #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
         sorted_relevant_docs = {k: v for k, v in sorted(relevant_docs.items(), key=lambda item: item[1], reverse=True)}
-        #print("relevant", sorted_relevant_docs)
+        print("relevant", sorted_relevant_docs)
         # find similar relevant_tweet - cosine_relevant
         final_tweets = []
         for tweet in sorted_relevant_docs.keys():

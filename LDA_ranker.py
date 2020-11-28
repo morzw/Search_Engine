@@ -3,6 +3,7 @@ from pprint import pprint
 import gensim
 import gensim.corpora as corpora
 import numpy as np
+from gensim.models import LdaModel
 from smart_open import open
 
 """class MyCorpus:
@@ -63,22 +64,23 @@ class LDA_ranker:
                                                          passes=10,
                                                          alpha='auto',
                                                          per_word_topics=True)"""
-        self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=5, id2word=self.id2word,minimum_probability=0)
-        for i in range(10):  # start the dict
+        #self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=5, id2word=self.id2word,minimum_probability=0)
+        self.lda_model = LdaModel.load("model.txt")
+        for i in range(5):  # start the dict
             self.topic_dict[i] = []
 
-        for tweet_idx in range(15000):  # every tweet prop>0.7 in topic list in dict
+        for tweet_idx in range(len(self.term_list)):  # every tweet prop>0.7 in topic list in dict
             topic_vector = self.lda_model[self.corpus[tweet_idx]]
             for topic_num, prob in topic_vector:
                 if prob > 0.7:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        #self.print_LDA_model()
+        self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics
         pprint(self.lda_model.print_topics())
-        new_text = ['Coronavirus', 'less', 'dangerous', 'flu']
+        """new_text = ['Coronavirus', 'less', 'dangerous', 'flu']
         temp = corpora.Dictionary([new_text])
         print("tweet_topic_vector", self.lda_model[self.corpus[0]])
         print("topic:", self.lda_model[self.corpus[0]][0][0])
@@ -86,7 +88,7 @@ class LDA_ranker:
         print("query_vector:", self.lda_model[temp.doc2bow(new_text)])
         print("query_tupel:", self.lda_model[temp.doc2bow(new_text)][0])
         print("query_topic:", self.lda_model[temp.doc2bow(new_text)][0][0])
-        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])
+        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])"""
 
     # Function to sort the list of tuples by its second item
     def Sort_Tuple(self, query_vector):
