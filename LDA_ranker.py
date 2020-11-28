@@ -21,7 +21,7 @@ class LDA_ranker:
     cosine_dict = {}
     id2word = None
 
-    def __init__(self, term_list1=[]):
+    def __init__(self, term_list1):
         self.term_list = term_list1
 
     """def iter(self):
@@ -48,7 +48,6 @@ class LDA_ranker:
         #for line in texts:
         #    self.corpus.append(id2word.doc2bow(line, allow_update=True))
         # View
-
         # Human readable format of corpus (term-frequency)
         # [[(id2word[id], freq) for id, freq in cp] for cp in corpus[:1]]
 
@@ -75,7 +74,7 @@ class LDA_ranker:
                 if prob > 0.7:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        self.print_LDA_model()
+        # self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics
@@ -102,12 +101,13 @@ class LDA_ranker:
         return query_vector
 
     def prob(self, query_as_list):
+        print("query_as_list", query_as_list)
         token = corpora.Dictionary([query_as_list])
         # query_vector = self.lda_model[token]
         query_vector = self.lda_model[token.doc2bow(query_as_list)]
         sorted_vector = self.Sort_Tuple(query_vector)
         query_topic = sorted_vector[0][0]
-        # print("query_topic", query_topic)
+
         query_prob_vector = []
         for tuple in sorted_vector:
             query_prob_vector.append(tuple[1])

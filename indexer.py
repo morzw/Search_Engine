@@ -160,7 +160,6 @@ class Indexer:
                 os.remove(self.file_name_list[0])
                 self.file_name_list.remove(self.file_name_list[1])
                 self.file_name_list.remove(self.file_name_list[0])
-            print(self.file_name_list)
             # finished making one big posting file
             self.create_inverted_index(self.file_name_list[0])
 
@@ -186,9 +185,6 @@ class Indexer:
 
 
         if self.finished_inverted:
-            #TODO: insert long term !!!!!!!!!!!!!!!!!!!
-            # insert long terms into LDA_list
-            # write LDA_list into file
             """with open('LDA.txt', 'w', encoding='utf-8') as fp:
                 for p in self.LDA_list:
                     s = ""
@@ -200,19 +196,18 @@ class Indexer:
                 for line in f:
                     sp_line = line.split(" ")
                     self.LDA_list.append(sp_line)
-            os.remove('LDA.txt')
+            #os.remove('LDA.txt')
             # add long term into LDA list
             for term in document.term_dict:
                 for ID in document.term_dict[term]:
                     tweet_id = ID[0]
-                    # print("ID", ID)
-                    # print("ID[0]", ID[0])
-                    # print("index", self.tweet_line_dict[tweet_id])
                     index = self.tweet_line_dict[tweet_id]
                     self.LDA_list[index].append(term)
             # empty term_dict
             document.term_dict.clear()
             self.lda = LDA_ranker(self.LDA_list)  # start LDA ranker
+            # empty LDA_list
+            #self.LDA_list.clear()
             self.lda.create_corpus()
             #return lda
 
