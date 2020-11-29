@@ -63,9 +63,9 @@ class LDA_ranker:
                                                          passes=10,
                                                          alpha='auto',
                                                          per_word_topics=True)"""
-        #self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=5, id2word=self.id2word,minimum_probability=0)
+        #self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=10, id2word=self.id2word,minimum_probability=0)
         self.lda_model = LdaModel.load("model.txt")
-        for i in range(5):  # start the dict
+        for i in range(10):  # start the dict
             self.topic_dict[i] = []
 
         for tweet_idx in range(len(self.term_list)):  # every tweet prop>0.7 in topic list in dict
@@ -74,7 +74,7 @@ class LDA_ranker:
                 if prob > 0.7:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        # self.print_LDA_model()
+        self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics

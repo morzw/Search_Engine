@@ -142,15 +142,25 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
         print("relevant", len(relevant_docs))
         # find LDA relevant
-        dict_of_relevant_tweet = lda.prob(query_as_list)
-        print("cosine dict", len(dict_of_relevant_tweet))
+        cosine_dict = lda.prob(query_as_list)
+        print("cosine dict", len(cosine_dict))
         # list of tweet_id with high cosine
         list_of_cosine_tweets = []
-        for key in dict_of_relevant_tweet.keys():
+        """for key in cosine_dict.keys():
             for tweet, value in indexer.tweet_line_dict.items():
                 if key == value:
-                    list_of_cosine_tweets.append(tweet)
+                    list_of_cosine_tweets.append(tweet)"""
+        print("indexer.tweet_line_dict", len(indexer.tweet_line_dict))
+        print(datetime.now())
+        # list out keys and values separately
+        key_list = list(indexer.tweet_line_dict.keys())
+        val_list = list(indexer.tweet_line_dict.values())
+        for index in cosine_dict.keys():
+            list_of_cosine_tweets.append(key_list[val_list.index(index)])
+        print(list_of_cosine_tweets[:10])
         print("finish_topic relevant", len(list_of_cosine_tweets))
+        print(datetime.now())
+
         #if len(relevant_docs) > 0:
         #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
         # find similar relevant_tweet - cosine_relevant
