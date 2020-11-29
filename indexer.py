@@ -19,12 +19,12 @@ class Indexer:
     tweet_line_dict = {}
     line_number = 0
     lda = None
-    lock = Lock()
+    #lock = Lock()
 
     def __init__(self, config):
         self.inverted_idx = {}
-        manager = Manager()
-        self.temp_posting_dict = manager.dict()
+        #manager = Manager()
+        #self.temp_posting_dict = manager.dict()
         self.temp_posting_dict = {}
         self.copy_posting_dict = {}
         self.sorted_posting_dict = {}
@@ -67,7 +67,7 @@ class Indexer:
             self.line_number += 1
 
         else:  # len(self.temp_posting_dict) == 500000
-            self.lock.acquire()
+            #self.lock.acquire()
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
             # empty temp_posting_dict
@@ -96,10 +96,10 @@ class Indexer:
                         s += term+" "
                     fp.write(s + "\n")
             self.LDA_list.clear()
-            self.lock.release()
+            #self.lock.release()
 
         if len(document.term_dict) != 0 and len(self.temp_posting_dict) > 0:
-            self.lock.acquire()
+            #self.lock.acquire()
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
             # empty temp_posting_dict
@@ -128,7 +128,7 @@ class Indexer:
                         s += term+" "
                     fp.write(s + "\n")
             self.LDA_list.clear()
-            self.lock.release()
+            #self.lock.release()
 
 
 
@@ -196,7 +196,7 @@ class Indexer:
                 for line in f:
                     sp_line = line.split(" ")
                     self.LDA_list.append(sp_line)
-            #os.remove('LDA.txt')
+            os.remove('LDA.txt')
             # add long term into LDA list
             for term in document.term_dict:
                 for ID in document.term_dict[term]:
@@ -211,7 +211,7 @@ class Indexer:
             self.lda.create_corpus()
             #return lda
 
-    def get__lad__(self):
+    def get__lda__(self):
         return self.lda
 
     def read_non_empty_line(self, file):

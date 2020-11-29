@@ -40,4 +40,6 @@ class Searcher:
                                     relevant_docs[tweet_id] += int(occur)
                             except:
                                 print('term {} not found in posting'.format(term))
-        return relevant_docs
+        sorted_relevant_docs = {k: v for k, v in sorted(relevant_docs.items(), key=lambda item: item[1], reverse=True)}
+
+        return sorted_relevant_docs

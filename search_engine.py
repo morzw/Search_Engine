@@ -55,7 +55,7 @@ def run_engine():
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.tf_idf_dict, "tf_idf_dict")
-    return indexer.get__lad__()
+    return indexer.get__lda__()
 
 
 def test(folder_list, counter, indexer, number_of_documents):
@@ -153,20 +153,18 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         print("finish_topic relevant", len(list_of_cosine_tweets))
         #if len(relevant_docs) > 0:
         #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
-        sorted_relevant_docs = {k: v for k, v in sorted(relevant_docs.items(), key=lambda item: item[1], reverse=True)}
-        print("relevant", sorted_relevant_docs)
         # find similar relevant_tweet - cosine_relevant
         final_tweets = []
-        for tweet in sorted_relevant_docs.keys():
+        for tweet in relevant_docs.keys():
             if tweet in list_of_cosine_tweets:
                 final_tweets.append(tweet)
 
         for tweet in final_tweets:
-            if tweet in sorted_relevant_docs:
-                del sorted_relevant_docs[tweet]
+            if tweet in relevant_docs:
+                del relevant_docs[tweet]
 
         if len(final_tweets) < k:
-            for key in sorted_relevant_docs:
+            for key in relevant_docs:
                 if k > len(final_tweets):
                     final_tweets.append(key)
                 else:
