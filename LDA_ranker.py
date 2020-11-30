@@ -74,7 +74,7 @@ class LDA_ranker:
                 if prob > 0.7:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        self.print_LDA_model()
+        #self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics
@@ -113,9 +113,9 @@ class LDA_ranker:
             query_prob_vector.append(tuple[1])
         cosine_dict = {}
         for index in self.topic_dict[query_topic]:
-            topic_vector = self.lda_model[self.corpus[index]]
+            index_vector = self.lda_model[self.corpus[index]]
             index_prob_vec = []
-            for topic in topic_vector:
+            for topic in index_vector:
                 index_prob_vec.append(topic[1])
             cosine = self.cosine(query_prob_vector, index_prob_vec)
             cosine_dict[index] = cosine  # index-cosine dict

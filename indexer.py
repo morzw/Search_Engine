@@ -20,6 +20,8 @@ class Indexer:
     line_number = 0
     lda = None
     #lock = Lock()
+    cur_num_of_tweets = 0
+    writen_terms = 0
 
     def __init__(self, config):
         self.inverted_idx = {}
@@ -32,7 +34,7 @@ class Indexer:
         self.sorted_term_dict = {}
         self.config = config
 
-    def add_new_doc(self, document):
+    def add_new_doc(self, document, num_of_tweets):
         """
         This function perform indexing process for a document object.
         Saved information is captures via two dictionaries ('inverted index' and 'posting')
@@ -41,6 +43,7 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
+        self.cur_num_of_tweets += 1
         document_dictionary = document.term_doc_dictionary
 
         # Update tf-idf dict
@@ -48,9 +51,10 @@ class Indexer:
         self.tf_idf_dict[tweet_id] = []       # max_tf         # distinct_words        # tweet_length
         self.tf_idf_dict[tweet_id].append((document.max_tf, document.distinct_words, document.doc_length))
 
+
         # Go over each term in the doc
         term_list_to_LDA = []
-        if len(self.temp_posting_dict) < 100000:
+        if len(self.temp_posting_dict) < 500000:
             for term in document_dictionary.keys():
                 try:
                     # Update posting
@@ -81,6 +85,7 @@ class Indexer:
             with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
                 for p in self.sorted_posting_dict.items():
                     for str1 in p[1]:
+                        self.writen_terms += 1
                         s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
                         fp.write(s+"\n")
             print("*********************************************")
@@ -98,7 +103,7 @@ class Indexer:
             self.LDA_list.clear()
             #self.lock.release()
 
-        if len(document.term_dict) != 0 and len(self.temp_posting_dict) > 0:
+        if self.cur_num_of_tweets == num_of_tweets and len(self.temp_posting_dict) > 0:  # if last tweet
             #self.lock.acquire()
             # copy temp_posting_dict
             self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
@@ -113,6 +118,7 @@ class Indexer:
             with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
                 for p in self.sorted_posting_dict.items():
                     for str1 in p[1]:
+                        self.writen_terms += 1
                         s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
                         fp.write(s+"\n")
             print("*********************************************")
@@ -134,7 +140,7 @@ class Indexer:
 
         time_to_merge = False
         # create new file of term_dict
-        if len(document.term_dict) != 0:
+        if self.cur_num_of_tweets == num_of_tweets:
             # sort the dict
             self.sorted_term_dict = collections.OrderedDict(sorted(document.term_dict.items()))
             # make a txt file out of the term_dict
@@ -142,6 +148,7 @@ class Indexer:
                 for p in self.sorted_term_dict.items():
                     if len(p[1]) > 1:  # more then 2 tweet_id
                         for str1 in p[1]:
+                            self.writen_terms += 1
                             s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-100"
                             fp.write(s + "\n")
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
@@ -197,12 +204,14 @@ class Indexer:
                     sp_line = line.split(" ")
                     self.LDA_list.append(sp_line)
             os.remove('LDA.txt')
+
             # add long term into LDA list
             for term in document.term_dict:
                 for ID in document.term_dict[term]:
                     tweet_id = ID[0]
-                    index = self.tweet_line_dict[tweet_id]
-                    self.LDA_list[index].append(term)
+                    if tweet_id in self.tweet_line_dict:
+                        index = self.tweet_line_dict[tweet_id]
+                        self.LDA_list[index].append(term)
             # empty term_dict
             document.term_dict.clear()
             self.lda = LDA_ranker(self.LDA_list)  # start LDA ranker
@@ -268,6 +277,10 @@ class Indexer:
         with open(file_name, buffering=2000000, encoding='utf-8') as f:
             num_of_lines = 1
             posting_string = []
+            if self.writen_terms < 50000000:
+                post_line = num_of_lines / 3
+            else:
+                post_line = num_of_lines / 5
             for line in f:
                 posting_string.append(line)
                 term = line.split(":")[0]
@@ -277,7 +290,7 @@ class Indexer:
                 else:
                     self.inverted_idx[term][0][0] += 1
                 # break the big posting file into smaller files
-                if num_of_lines == 875268:
+                if num_of_lines == post_line:
                     print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                     with open('posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
                         for p in posting_string:

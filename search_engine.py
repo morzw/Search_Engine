@@ -1,7 +1,10 @@
 import re
+import threading
 from datetime import datetime
 from nltk.corpus import stopwords
 from multiprocessing import Process, Lock
+
+from WordNet_ranker import WordNet_ranker
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -29,6 +32,23 @@ def run_engine():
     for file_name in r.dates_list:
         tweets_per_date = r.read_file(file_name)
         files_list.append(tweets_per_date)
+    print("files_list", len(files_list))
+
+    num_of_tweets = 0
+    for folder_list in files_list:
+        print("folder_list", len(folder_list))
+        print("files_list", len(files_list))
+        num_of_tweets += len(folder_list)
+    print("num_of_tweets", num_of_tweets)
+
+    """#reading per folder
+    r.create_files_name_list()
+    threads = []
+    for file_name in r.dates_list:
+        t = threading.Thread(target=r.read_file(file_name))
+        threads.append(t)
+        t.start()
+    print("files_list", r.files_list)"""
 
     """counter = 1
     procs = []
@@ -42,6 +62,27 @@ def run_engine():
         proc.join()
     print('Finished parsing and indexing. Starting to export files')"""
 
+
+    """counter = 1
+    # Iterate over every folder in the DATA
+    for folder_list in files_list:
+        print(counter)
+        cr = datetime.now()
+        print(cr)
+        # Iterate over every tweet in the folder
+        for idx, tweet in enumerate(folder_list):
+            # parse the tweet
+            parsed_document = p.parse_doc(tweet)
+            number_of_documents += 1
+            # index the tweet data
+            indexer.add_new_doc(parsed_document, num_of_tweets)
+
+        print("number of tweets", number_of_documents)
+        cn = datetime.now()
+        print(cn)
+        counter += 1
+    print('Finished parsing and indexing. Starting to export files')"""
+
     #read only one folder
     documents_list = r.read_file(file_name='')
     # Iterate over every document in the file
@@ -50,7 +91,7 @@ def run_engine():
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
         # index the document data
-        indexer.add_new_doc(parsed_document)
+        indexer.add_new_doc(parsed_document, len(documents_list))
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
@@ -99,8 +140,8 @@ def search_and_rank_query(queries, inverted_index, k, lda):
     tweet_id_num = 1
     for query in queries_list:
         p = Parse()
-        # parse the query
-        query_as_list = p.parse_sentence(query, 0)
+        # parse LDA query
+        LDA_query = p.parse_sentence(query, 0)
         original_query_list = query.split(" ")
         stop_words = stopwords.words('english')
         original_query_list = [w for w in original_query_list if w not in stop_words]
@@ -115,10 +156,10 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                     if word.find(".") != -1:
                         word = word[:-1]
                 if not to_stem:
-                    query_as_list.append(word)
+                    LDA_query.append(word)
                 else:
                     stem_word = Stemmer().stem_term(word)
-                    query_as_list.append(stem_word)
+                    LDA_query.append(stem_word)
             elif len(word) > 1 and re.search('[a-zA-Z]', word) and word[0].isupper():  # upper first char
                 term = word
                 if original_query_list.index(word) + 1 < len(original_query_list):
@@ -133,16 +174,19 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                         else:
                             break
                     if len_term > 1:
-                        query_as_list.append(term)
+                        LDA_query.append(term)
             counter += len_term
+        print(LDA_query)
+        # WordNet query
+        #wn = WordNet_ranker(LDA_query)
+        #wn.extend_query()
 
-        print(query_as_list)
         searcher = Searcher(inverted_index)
         # find relevant_docs
-        relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
+        relevant_docs = searcher.relevant_docs_from_posting(LDA_query)
         print("relevant", len(relevant_docs))
         # find LDA relevant
-        cosine_dict = lda.prob(query_as_list)
+        cosine_dict = lda.prob(LDA_query)
         print("cosine dict", len(cosine_dict))
         # list of tweet_id with high cosine
         list_of_cosine_tweets = []
@@ -150,14 +194,12 @@ def search_and_rank_query(queries, inverted_index, k, lda):
             for tweet, value in indexer.tweet_line_dict.items():
                 if key == value:
                     list_of_cosine_tweets.append(tweet)"""
-        print("indexer.tweet_line_dict", len(indexer.tweet_line_dict))
         print(datetime.now())
         # list out keys and values separately
         key_list = list(indexer.tweet_line_dict.keys())
         val_list = list(indexer.tweet_line_dict.values())
         for index in cosine_dict.keys():
             list_of_cosine_tweets.append(key_list[val_list.index(index)])
-        print(list_of_cosine_tweets[:10])
         print("finish_topic relevant", len(list_of_cosine_tweets))
         print(datetime.now())
 
@@ -165,6 +207,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
         # find similar relevant_tweet - cosine_relevant
         final_tweets = []
+        print("relevant.keys()", relevant_docs.keys())
         for tweet in relevant_docs.keys():
             if tweet in list_of_cosine_tweets:
                 final_tweets.append(tweet)

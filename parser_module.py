@@ -20,11 +20,6 @@ class Parse:
 
     def parse_term(self, tokenized_text, tweet_id):
         # Term Dict + Capital Letter Dict:
-
-        # END OF CORPUS - send dicts
-        if tweet_id == "1291687810479591424":
-            self.finished = True
-
         counter = 0
         while counter < len(tokenized_text):
             len_term = 1
@@ -506,10 +501,7 @@ class Parse:
             all_keys = term_dict.keys()
             distinct_words = len(all_keys)
 
-        if self.finished:
-            tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                             quote_url, term_dict, doc_length, max_tf, distinct_words, self.capital_letter_dict, self.term_dict)
-        else:
-            tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                             quote_url, term_dict, doc_length, max_tf, distinct_words, {}, {})
+        tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
+                         quote_url, term_dict, doc_length, max_tf, distinct_words, self.capital_letter_dict, self.term_dict)
+
         return tweet
