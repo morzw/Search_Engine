@@ -43,6 +43,7 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
+
         self.cur_num_of_tweets += 1
         document_dictionary = document.term_doc_dictionary
 
@@ -208,10 +209,11 @@ class Indexer:
             # add long term into LDA list
             for term in document.term_dict:
                 for ID in document.term_dict[term]:
-                    tweet_id = ID[0]
-                    if tweet_id in self.tweet_line_dict:
-                        index = self.tweet_line_dict[tweet_id]
-                        self.LDA_list[index].append(term)
+                    if ID[1] > 1:
+                        tweet_id = ID[0]
+                        if tweet_id in self.tweet_line_dict:
+                            index = self.tweet_line_dict[tweet_id]
+                            self.LDA_list[index].append(term)
             # empty term_dict
             document.term_dict.clear()
             self.lda = LDA_ranker(self.LDA_list)  # start LDA ranker
@@ -278,9 +280,9 @@ class Indexer:
             num_of_lines = 1
             posting_string = []
             if self.writen_terms < 50000000:
-                post_line = num_of_lines / 3
+                post_line = self.writen_terms / 3
             else:
-                post_line = num_of_lines / 5
+                post_line = self.writen_terms / 5
             for line in f:
                 posting_string.append(line)
                 term = line.split(":")[0]
@@ -297,7 +299,7 @@ class Indexer:
                             fp.write(p)
                     print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                     self.posting_file_num += 1
-                    num_of_lines = 1
+                    num_of_lines = 0
                     posting_string = []
                 num_of_lines += 1
 

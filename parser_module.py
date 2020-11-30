@@ -95,7 +95,9 @@ class Parse:
         """
         # print(text)
         text_tokens = word_tokenize(text)
-##############################################################################################
+        # if text_tokens[0] == 'RT':
+        #     return []
+
         # find TAGS
         if "@" in text_tokens:
             index_list1 = [n for n, x in enumerate(text_tokens) if x == '@']
@@ -458,8 +460,14 @@ class Parse:
         term_dict = {}
 
         # text tokenized
-        idx_in_tweet = 0
         tokenized_text = self.parse_sentence(full_text, tweet_id)
+        """if tokenized_text == []:
+            tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
+                             quote_url, {}, 0, 0, 0, self.capital_letter_dict,
+                             self.term_dict)
+            return tweet"""
+
+        idx_in_tweet = 0
         for term in tokenized_text:
             if term.isdigit() or len(term) > 1:
                 if not ( term == "!" or term == "##" or term == "#" or term == "~" or term == "#!" or term == "#%" or term == "~r"):

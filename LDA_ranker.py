@@ -6,11 +6,15 @@ import numpy as np
 from gensim.models import LdaModel
 from smart_open import open
 
+from configuration import ConfigClass
+
 """class MyCorpus:
     def _iter_(self):
         for line in open('LDA.txt'):
             # assume there's one document per line, tokens separated by whitespace
             yield self.id2word.doc2bow(line.lower().split())"""
+
+
 
 class LDA_ranker:
 
@@ -23,6 +27,9 @@ class LDA_ranker:
 
     def __init__(self, term_list1):
         self.term_list = term_list1
+        self.to_stem = ConfigClass().get__toStem()
+
+
 
     """def iter(self):
         with open('LDA.txt', buffering=2000000, encoding='utf-8') as f:
@@ -37,6 +44,10 @@ class LDA_ranker:
 
     def create_corpus(self):
         self.id2word = corpora.Dictionary(self.term_list)
+
+
+        #MC = MyCorpus()
+        #self.corpus = MC.__iter__(self.term_list, self.id2word)
         # self.corpus = MyCorpus()
         #self.corpus = self._iter_()
         # Create Dictionary
@@ -64,7 +75,11 @@ class LDA_ranker:
                                                          alpha='auto',
                                                          per_word_topics=True)"""
         #self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=10, id2word=self.id2word,minimum_probability=0)
-        self.lda_model = LdaModel.load("model.txt")
+        if not self.to_stem:
+            self.lda_model = LdaModel.load("model.txt")
+        else:
+            self.lda_model = LdaModel.load("model_stem.txt")
+
         for i in range(10):  # start the dict
             self.topic_dict[i] = []
 
@@ -74,12 +89,12 @@ class LDA_ranker:
                 if prob > 0.7:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        #self.print_LDA_model()
+        self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics
         pprint(self.lda_model.print_topics())
-        """new_text = ['Coronavirus', 'less', 'dangerous', 'flu']
+        new_text = ['Coronavirus', 'less', 'dangerous', 'flu']
         temp = corpora.Dictionary([new_text])
         print("tweet_topic_vector", self.lda_model[self.corpus[0]])
         print("topic:", self.lda_model[self.corpus[0]][0][0])
@@ -87,7 +102,7 @@ class LDA_ranker:
         print("query_vector:", self.lda_model[temp.doc2bow(new_text)])
         print("query_tupel:", self.lda_model[temp.doc2bow(new_text)][0])
         print("query_topic:", self.lda_model[temp.doc2bow(new_text)][0][0])
-        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])"""
+        print("query_prob:", self.lda_model[temp.doc2bow(new_text)][0][1])
 
     # Function to sort the list of tuples by its second item
     def Sort_Tuple(self, query_vector):
