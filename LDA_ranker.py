@@ -1,19 +1,9 @@
 from pprint import pprint
 # Gensim
-import gensim
 import gensim.corpora as corpora
 import numpy as np
 from gensim.models import LdaModel
-from smart_open import open
-
 from configuration import ConfigClass
-
-"""class MyCorpus:
-    def _iter_(self):
-        for line in open('LDA.txt'):
-            # assume there's one document per line, tokens separated by whitespace
-            yield self.id2word.doc2bow(line.lower().split())"""
-
 
 
 class LDA_ranker:
@@ -29,39 +19,18 @@ class LDA_ranker:
         self.term_list = term_list1
         self.to_stem = ConfigClass().get__toStem()
 
-
-
-    """def iter(self):
-        with open('LDA.txt', buffering=2000000, encoding='utf-8') as f:
-            for line in f:
-                lst = line.split(" ")
-                print(lst)
-                yield self.id2word.doc2bow(lst, allow_update=True)"""
-
-        # for line in open('LDA.txt'):
-        #     # assume there's one document per line, tokens separated by whitespace
-        #     yield self.id2word.doc2bow(line.lower().split(" "))
-
     def create_corpus(self):
-        self.id2word = corpora.Dictionary(self.term_list)
-
-
-        #MC = MyCorpus()
-        #self.corpus = MC.__iter__(self.term_list, self.id2word)
-        # self.corpus = MyCorpus()
-        #self.corpus = self._iter_()
         # Create Dictionary
-        #id2word = corpora.Dictionary(self.term_list)
+        self.id2word = corpora.Dictionary(self.term_list)
+        #self.id2word = gensim.corpora.Dictionary(doc for doc in self.term_list)
+
         # Create Corpus
         texts = self.term_list
         # Term Document Frequency
         self.corpus = [self.id2word.doc2bow(text) for text in texts]
+
         #for line in texts:
         #    self.corpus.append(id2word.doc2bow(line, allow_update=True))
-        # View
-        # Human readable format of corpus (term-frequency)
-        # [[(id2word[id], freq) for id, freq in cp] for cp in corpus[:1]]
-
         self.build_LDA_model(self.id2word)
 
     def build_LDA_model(self, id2word):
@@ -83,13 +52,13 @@ class LDA_ranker:
         for i in range(10):  # start the dict
             self.topic_dict[i] = []
 
-        for tweet_idx in range(len(self.term_list)):  # every tweet prop>0.7 in topic list in dict
+        for tweet_idx in range(len(self.term_list)):  # every tweet prop>0.55 in topic list in dict
             topic_vector = self.lda_model[self.corpus[tweet_idx]]
             for topic_num, prob in topic_vector:
-                if prob > 0.7:
+                if prob > 0.55:
                     self.topic_dict[topic_num].append(tweet_idx)
 
-        self.print_LDA_model()
+        #self.print_LDA_model()
 
     def print_LDA_model(self):
         # Print the Keyword in the 10 topics
@@ -109,7 +78,7 @@ class LDA_ranker:
         lst = len(query_vector)
         for i in range(0, lst):
             for j in range(0, lst - i - 1):
-                if (query_vector[j][1] > query_vector[j + 1][1]):
+                if query_vector[j][1] > query_vector[j + 1][1]:
                     temp = query_vector[j]
                     query_vector[j] = query_vector[j + 1]
                     query_vector[j + 1] = temp
@@ -118,7 +87,6 @@ class LDA_ranker:
     def prob(self, query_as_list):
         print("query_as_list", query_as_list)
         token = corpora.Dictionary([query_as_list])
-        # query_vector = self.lda_model[token]
         query_vector = self.lda_model[token.doc2bow(query_as_list)]
         sorted_vector = self.Sort_Tuple(query_vector)
         query_topic = sorted_vector[0][0]

@@ -85,14 +85,20 @@ def run_engine():
 
     #read only one folder
     documents_list = r.read_file(file_name='')
+    num_indexed = len(documents_list)
+
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
         # parse the document
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
         # index the document data
+        """#if not parsed_document.term_doc_dictionary:
+        if parsed_document.doc_length == -1:
+            num_indexed -= 1
         #if bool(parsed_document.term_doc_dictionary):
-        indexer.add_new_doc(parsed_document, len(documents_list))
+        if parsed_document.doc_length != -1:"""
+        indexer.add_new_doc(parsed_document, num_indexed)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
@@ -125,6 +131,8 @@ def load_index():
 
 
 def search_and_rank_query(queries, inverted_index, k, lda):
+    print("start:", datetime.now())
+
     config = ConfigClass()
     indexer = Indexer(config)
     to_stem = config.get__toStem()
@@ -135,7 +143,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
     if type(queries) is str:  # if queries is a text file
         with open(queries, encoding='utf-8') as f:
             for line in f:
-                if line != "":
+                if line != "\n":
                     queries_list.append(line)
 
     query_num = 1
@@ -191,29 +199,21 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         # find LDA relevant
         cosine_dict = lda.prob(tokenized_query)
         print("cosine dict", len(cosine_dict))
+
         # list of tweet_id with high cosine
-        list_of_cosine_tweets = []
         dict_of_cosine_tweets = {}
         """for key in cosine_dict.keys():
             for tweet, value in indexer.tweet_line_dict.items():
                 if key == value:
                     list_of_cosine_tweets.append(tweet)"""
-        print(datetime.now())
         # list out keys and values separately
         key_list = list(indexer.tweet_line_dict.keys())
         val_list = list(indexer.tweet_line_dict.values())
         for index in cosine_dict.keys():
             dict_of_cosine_tweets[key_list[val_list.index(index)]] = cosine_dict[index]
-            #list_of_cosine_tweets.append(key_list[val_list.index(index)])
-        print("finish_topic relevant", len(dict_of_cosine_tweets))
-        print(datetime.now())
+        #print("finish_topic relevant", len(dict_of_cosine_tweets))
 
-        #if len(relevant_docs) > 0:
-        #    ranked_docs = searcher.ranker.rank_relevant_doc(list_of_relevant_tweet)
-        # find similar relevant_tweet - cosine_relevant
-        final_tweets = []
         final_dict = {}
-
         #print("relevant", relevant_docs)
         for tweet_id in relevant_docs.keys():
             if tweet_id in dict_of_cosine_tweets:
@@ -259,8 +259,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                     tweet_id_num += 1
             fp.write(s)
         query_num += 1
-    cn = datetime.now()
-    print(cn)
+    print("end:", datetime.now())
 
     # return tok K of final_tweets
     return searcher.ranker.retrieve_top_k(final_tweets, k)

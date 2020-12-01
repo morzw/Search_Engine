@@ -43,7 +43,6 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
-
         self.cur_num_of_tweets += 1
         document_dictionary = document.term_doc_dictionary
 
@@ -55,7 +54,7 @@ class Indexer:
 
         # Go over each term in the doc
         term_list_to_LDA = []
-        if len(self.temp_posting_dict) < 500000:
+        if len(self.temp_posting_dict) < 500000 and document.doc_length != -1:
             for term in document_dictionary.keys():
                 try:
                     # Update posting
@@ -73,36 +72,37 @@ class Indexer:
 
         else:  # len(self.temp_posting_dict) == 500000
             #self.lock.acquire()
-            # copy temp_posting_dict
-            self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
-            # empty temp_posting_dict
-            self.temp_posting_dict.clear()
-            # sort the dict
-            self.sorted_posting_dict = collections.OrderedDict(sorted(self.copy_posting_dict.items()))
-            # empty copy_posting_dict
-            self.copy_posting_dict.clear()
-            print("*********************************************")
-            # make a txt file out of the sorted_posting_dict
-            with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
-                for p in self.sorted_posting_dict.items():
-                    for str1 in p[1]:
-                        self.writen_terms += 1
-                        s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
-                        fp.write(s+"\n")
-            print("*********************************************")
-            # empty copy_posting_dict
-            self.sorted_posting_dict.clear()
-            self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
-            self.file_counter += 1
-            # write the corpus to the disk
-            with open('LDA.txt', 'a', encoding='utf-8') as fp:
-                for p in self.LDA_list:
-                    s = ""
-                    for term in p:
-                        s += term+" "
-                    fp.write(s + "\n")
-            self.LDA_list.clear()
-            #self.lock.release()
+            if document.doc_length != -1:
+                # copy temp_posting_dict
+                self.copy_posting_dict = copy.deepcopy(self.temp_posting_dict)
+                # empty temp_posting_dict
+                self.temp_posting_dict.clear()
+                # sort the dict
+                self.sorted_posting_dict = collections.OrderedDict(sorted(self.copy_posting_dict.items()))
+                # empty copy_posting_dict
+                self.copy_posting_dict.clear()
+                print("*********************************************")
+                # make a txt file out of the sorted_posting_dict
+                with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
+                    for p in self.sorted_posting_dict.items():
+                        for str1 in p[1]:
+                            self.writen_terms += 1
+                            s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
+                            fp.write(s+"\n")
+                print("*********************************************")
+                # empty copy_posting_dict
+                self.sorted_posting_dict.clear()
+                self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
+                self.file_counter += 1
+                # write the corpus to the disk
+                with open('LDA.txt', 'a', encoding='utf-8') as fp:
+                    for p in self.LDA_list:
+                        s = ""
+                        for term in p:
+                            s += term+" "
+                        fp.write(s + "\n")
+                self.LDA_list.clear()
+                #self.lock.release()
 
         if self.cur_num_of_tweets == num_of_tweets and len(self.temp_posting_dict) > 0:  # if last tweet
             #self.lock.acquire()
@@ -136,8 +136,6 @@ class Indexer:
                     fp.write(s + "\n")
             self.LDA_list.clear()
             #self.lock.release()
-
-
 
         time_to_merge = False
         # create new file of term_dict
@@ -311,7 +309,8 @@ class Indexer:
                         fp.write(p)
                 print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 self.posting_file_num += 1
-        os.remove(self.file_name_list[0])
+        if self.file_counter > self.posting_file_num:
+            os.remove(self.file_name_list[0])
         self.finished_inverted = True
 
 
