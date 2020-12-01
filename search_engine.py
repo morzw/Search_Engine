@@ -244,6 +244,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                 else:
                     break"""
 
+
         # write the results into file
         tweet_id_num = 1
         s = ""

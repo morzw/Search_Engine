@@ -22,6 +22,7 @@ class Indexer:
     #lock = Lock()
     cur_num_of_tweets = 0
     writen_terms = 0
+    zipf = {}
 
     def __init__(self, config):
         self.inverted_idx = {}
@@ -61,6 +62,7 @@ class Indexer:
                     if term not in self.temp_posting_dict.keys():
                         self.temp_posting_dict[term] = []
                         self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
+
                     else:
                         self.temp_posting_dict[term].append([document.tweet_id, document_dictionary[term][0], document_dictionary[term][1]])
                 except:
@@ -283,7 +285,15 @@ class Indexer:
                 post_line = self.writen_terms / 5
             for line in f:
                 posting_string.append(line)
-                term = line.split(":")[0]
+                split_line = line.split(":")
+                term = split_line[0]
+                tf = line.split("-")[-2]
+                if term not in self.zipf.keys():
+                    self.zipf[term] = 0
+                    self.zipf[term] = int(tf)
+                else:
+                    self.zipf[term] += int(tf)
+
                 if term not in self.inverted_idx.keys():
                     self.inverted_idx[term] = []
                     self.inverted_idx[term].append([1, 'posting' + str(self.posting_file_num) + '.txt'])  # num of tweets, pointer
@@ -311,6 +321,9 @@ class Indexer:
                 self.posting_file_num += 1
         if self.file_counter > self.posting_file_num:
             os.remove(self.file_name_list[0])
+        with open('zipf.csv', 'w', encoding='utf-8') as fp:
+            for key in self.zipf.keys():
+                fp.write("%s,%s\n" % (key, self.zipf[key]))
         self.finished_inverted = True
 
 
