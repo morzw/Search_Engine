@@ -36,8 +36,6 @@ def run_engine():
 
     num_of_tweets = 0
     for folder_list in files_list:
-        print("folder_list", len(folder_list))
-        print("files_list", len(files_list))
         num_of_tweets += len(folder_list)
     print("num_of_tweets", num_of_tweets)
 
@@ -145,7 +143,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
             for line in f:
                 if line != "\n":
                     queries_list.append(line)
-
+    all_results = []
     query_num = 1
     tweet_id_num = 1
     for query in queries_list:
@@ -206,28 +204,34 @@ def search_and_rank_query(queries, inverted_index, k, lda):
             for tweet, value in indexer.tweet_line_dict.items():
                 if key == value:
                     list_of_cosine_tweets.append(tweet)"""
-        # list out keys and values separately
+        #list out keys and values separately
         key_list = list(indexer.tweet_line_dict.keys())
         val_list = list(indexer.tweet_line_dict.values())
-        for index in cosine_dict.keys():
+        for index in cosine_dict.keys(): # find the tweet id
             dict_of_cosine_tweets[key_list[val_list.index(index)]] = cosine_dict[index]
         #print("finish_topic relevant", len(dict_of_cosine_tweets))
 
         final_dict = {}
         #print("relevant", relevant_docs)
-        for tweet_id in relevant_docs.keys():
-            if tweet_id in dict_of_cosine_tweets:
-                final_dict[tweet_id] = 0
-                final_dict[tweet_id] += (relevant_docs[tweet_id]+dict_of_cosine_tweets[tweet_id])
+        for tweet_id in dict_of_cosine_tweets.keys():
+            if k > len(final_dict):
+                if tweet_id in relevant_docs:
+                    final_dict[tweet_id] = 0
+                    final_dict[tweet_id] += (relevant_docs[tweet_id]+dict_of_cosine_tweets[tweet_id])
 
         sorted_cosine_tweets = {k: v for k, v in
                                 sorted(final_dict.items(), key=lambda item: item[1], reverse=True)}
         final_tweets = list(sorted_cosine_tweets.keys())
 
-        for key in relevant_docs.keys():
-            if key not in final_dict:
-                if k > len(final_tweets):
-                    final_tweets.append(key)
+        if k > len(final_tweets):
+            for key in relevant_docs.keys():
+                if key not in final_dict:
+                    if k > len(final_tweets):
+                        final_tweets.append(key)
+                    if k == len(final_tweets):
+                        break
+
+        #print("relevant", relevant_docs)
         print("sorted_cosine_tweets", sorted_cosine_tweets)
 
         """for tweet in relevant_docs.keys():
@@ -244,26 +248,20 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                 else:
                     break"""
 
-
-        # write the results into file
+        # write the results into csv file
         tweet_id_num = 1
         s = ""
         with open('results.csv', 'a', encoding='utf-8') as fp:
             for p in final_tweets:
-                if tweet_id_num <= k:
-                    if tweet_id_num == 1:
-                        s = ("Query number " + str(query_num) + ":" + "\n")
-                    if tweet_id_num < k:
-                        s += ("Tweet rank " + str(tweet_id_num) + ":" + "\n" + p + "\n")
-                    if tweet_id_num == k:
-                        s += ("Tweet rank " + str(tweet_id_num) + ":" + "\n" + p + "\n" + "\n")
-                    tweet_id_num += 1
-            fp.write(s)
+                s = ("Tweet id: " + "{"+p+"}" + " Score: " + "{"+str(tweet_id_num)+"}" + "\n")
+                tweet_id_num += 1
+                fp.write(s)
         query_num += 1
+        all_results.append(final_tweets)
     print("end:", datetime.now())
 
     # return tok K of final_tweets
-    return searcher.ranker.retrieve_top_k(final_tweets, k)
+    return all_results
 
 
 #def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
@@ -277,21 +275,21 @@ def main():
     # query = queries
     """if type(query) is list:  # if queries is a list
         if len(query) == 0:
-            print("There is no query"+"\n"+"0 result")
+            print("Tweet id: " + "{}" + " Score: " + "{}" + "\n")
     if type(query) is str:  # if queries is a text file
         with open(query, encoding='utf-8') as f:
             for line in f:
                 if line == "":
-                    print("There is no query" + "\n" + "0 result")"""
+                    print("Tweet id: " + "{}" + " Score: " + "{}" + "\n")"""
 
     lda = run_engine()
     #query = input("Please enter a query: ")
     #k = int(input("Please enter number of docs to retrieve: "))
     inverted_index = load_index()
     #for doc_tuple in search_and_rank_query(query, inverted_index, k):
-    num = 1
-    for doc_tuple in search_and_rank_query("queries.txt", inverted_index, 20, lda):
-        print(num)
-        print(doc_tuple)
-        #print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
-        num += 1
+    final_tweets = search_and_rank_query("queries.txt", inverted_index, 20, lda)
+    for query in final_tweets:
+        num = 1
+        for res in query:
+            print("Tweet id: " + "{" + res + "}" + " Score: " + "{" + str(num) + "}")
+            num += 1

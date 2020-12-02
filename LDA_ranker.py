@@ -44,7 +44,7 @@ class LDA_ranker:
                                                          passes=10,
                                                          alpha='auto',
                                                          per_word_topics=True)"""
-        self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=10, id2word=self.id2word,minimum_probability=0)
+        #self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=10, id2word=self.id2word,minimum_probability=0)
         if not self.to_stem:
             self.lda_model = LdaModel.load("model.txt")
         else:

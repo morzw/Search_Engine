@@ -1,5 +1,8 @@
 import pickle
 
+from configuration import ConfigClass
+from indexer import Indexer
+
 
 def save_obj(obj, name):
     """
@@ -12,6 +15,8 @@ def save_obj(obj, name):
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
+
+
 def load_obj(name):
     """
     This function will load a pickle file
@@ -20,3 +25,8 @@ def load_obj(name):
     """
     with open(name + '.pkl', 'rb') as f:
         return pickle.load(f)
+
+def load_inverted_index():
+    config = ConfigClass()
+    indexer = Indexer(config)
+    return indexer.inverted_idx

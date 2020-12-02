@@ -470,7 +470,7 @@ class Parse:
         idx_in_tweet = 0
         for term in tokenized_text:
             if term.isdigit() or len(term) > 1:
-                if not ( term == "!" or term == "##" or term == "#" or term == "#$" or term.find(":") != -1 or term == "~" or term == "#!" or term == "#%" or term == "~r"):
+                if not ( term == "!" or term == "##" or term == "the" or term == "#" or term == "#$" or term.find(":") != -1 or term == "~" or term == "#!" or term == "#%" or term == "~r"):
                     if term not in term_dict.keys():
                         term_dict[term] = [1, [idx_in_tweet]]  # 1->num of occur in tweet, idx_in_tweet-> place in tweet
                     else:

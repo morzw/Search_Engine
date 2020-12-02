@@ -288,11 +288,11 @@ class Indexer:
                 split_line = line.split(":")
                 term = split_line[0]
                 tf = line.split("-")[-2]
-                if term not in self.zipf.keys():
+                """if term not in self.zipf.keys():
                     self.zipf[term] = 0
                     self.zipf[term] = int(tf)
                 else:
-                    self.zipf[term] += int(tf)
+                    self.zipf[term] += int(tf)"""
 
                 if term not in self.inverted_idx.keys():
                     self.inverted_idx[term] = []
@@ -321,9 +321,9 @@ class Indexer:
                 self.posting_file_num += 1
         if self.file_counter > self.posting_file_num:
             os.remove(self.file_name_list[0])
-        with open('zipf.csv', 'w', encoding='utf-8') as fp:
+        """with open('zipf.csv', 'w', encoding='utf-8') as fp:
             for key in self.zipf.keys():
-                fp.write("%s,%s\n" % (key, self.zipf[key]))
+                fp.write("%s,%s\n" % (key, self.zipf[key]))"""
         self.finished_inverted = True
 
 
