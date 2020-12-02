@@ -461,6 +461,8 @@ class Parse:
 
         # text tokenized
         tokenized_text = self.parse_sentence(full_text, tweet_id)
+
+        # if RT
         if tokenized_text == []:
             tweet = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                              quote_url, {}, -1, 0, 0, self.capital_letter_dict,

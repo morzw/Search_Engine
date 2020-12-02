@@ -1,8 +1,8 @@
 import pickle
 
+import indexer
 from configuration import ConfigClass
 from indexer import Indexer
-
 
 def save_obj(obj, name):
     """
@@ -27,6 +27,6 @@ def load_obj(name):
         return pickle.load(f)
 
 def load_inverted_index():
-    config = ConfigClass()
-    indexer = Indexer(config)
-    return indexer.inverted_idx
+    inverted_index = load_obj("inverted_idx")
+    return inverted_index
+

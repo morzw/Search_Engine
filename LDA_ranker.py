@@ -23,27 +23,14 @@ class LDA_ranker:
     def create_corpus(self):
         # Create Dictionary
         self.id2word = corpora.Dictionary(self.term_list)
-        #self.id2word = gensim.corpora.Dictionary(doc for doc in self.term_list)
-
         # Create Corpus
         texts = self.term_list
         # Term Document Frequency
         self.corpus = [self.id2word.doc2bow(text) for text in texts]
 
-        #for line in texts:
-        #    self.corpus.append(id2word.doc2bow(line, allow_update=True))
         self.build_LDA_model(self.id2word)
 
     def build_LDA_model(self, id2word):
-        """self.lda_model = gensim.models.ldamodel.LdaModel(corpus=self.corpus,
-                                                         id2word=self.id2word,
-                                                         num_topics=10,
-                                                         random_state=100,
-                                                         update_every=1,
-                                                         chunksize=100,
-                                                         passes=10,
-                                                         alpha='auto',
-                                                         per_word_topics=True)"""
         #self.lda_model = gensim.models.LdaMulticore(self.corpus, num_topics=10, id2word=self.id2word,minimum_probability=0)
         if not self.to_stem:
             self.lda_model = LdaModel.load("model.txt")
@@ -86,7 +73,7 @@ class LDA_ranker:
         return query_vector
 
     def prob(self, query_as_list):
-        print("query_as_list", query_as_list)
+        #print("query_as_list", query_as_list)
         token = corpora.Dictionary([query_as_list])
         query_vector = self.lda_model[token.doc2bow(query_as_list)]
         sorted_vector = self.Sort_Tuple(query_vector)
