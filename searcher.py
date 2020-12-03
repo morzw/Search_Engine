@@ -8,7 +8,6 @@ class Searcher:
         """
         :param inverted_index: dictionary of inverted index
         """
-        self.parser = Parse()
         self.ranker = Ranker()
         self.inverted_index = inverted_index
 

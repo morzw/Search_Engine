@@ -1,3 +1,4 @@
+import os
 import re
 import threading
 from datetime import datetime
@@ -14,44 +15,49 @@ import utils
 from stemmer import Stemmer
 
 config = ConfigClass()
-
-#def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
-def main():
+def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
+#def main():
     print("Start program")
     # TODO: write posting into output path
-    """#config = ConfigClass()
     config.set__toStem(stemming)
     config.set__corpusPath(corpus_path)
     config.set__savedFileMainFolder(output_path)
     k = num_docs_to_retrieve
     query = queries
-
+    empty_query = False
     if type(query) is list:  # if queries is a list
-        if len(query) == 0:
+        if len(query) == 0 or (len(query) == 1 and query[0] == ""):
+            empty_query = True
+            with open('results.csv', 'a', encoding='utf-8') as fp:
+                s = "Tweet id: " + "{}" + " Score: " + "{}" + "\n"
+                fp.write(s)
             print("Tweet id: " + "{}" + " Score: " + "{}" + "\n")
     if type(query) is str:  # if queries is a text file
         with open(query, encoding='utf-8') as f:
             for line in f:
                 if line == "":
-                    print("Tweet id: " + "{}" + " Score: " + "{}" + "\n")"""
-
-    lda = run_engine()
-    #query = input("Please enter a query: ")
-    #k = int(input("Please enter number of docs to retrieve: "))
-    inverted_index = load_index()
-    """final_tweets = search_and_rank_query(query, inverted_index, k, lda)
-    for query in final_tweets:
-        num = 1
-        for res in query:
-            print("Tweet id: " + "{" + res + "}" + " Score: " + "{" + str(num) + "}")
-            num += 1"""
-    #for doc_tuple in search_and_rank_query(query, inverted_index, k):
-    final_tweets = search_and_rank_query("queries.txt", inverted_index, 10, lda)
-    for query in final_tweets:
-        num = 1
-        for res in query:
-            print("Tweet id: " + "{" + res + "}" + " Score: " + "{" + str(num) + "}")
-            num += 1
+                    empty_query = True
+                    with open('results.csv', 'a', encoding='utf-8') as fp:
+                        s = "Tweet id: " + "{}" + " Score: " + "{}" + "\n"
+                        fp.write(s)
+                    print("Tweet id: " + "{}" + " Score: " + "{}" + "\n")
+    if not empty_query:
+        lda = run_engine()
+        #query = input("Please enter a query: ")
+        #k = int(input("Please enter number of docs to retrieve: "))
+        inverted_index = load_index()
+        final_tweets = search_and_rank_query(query, inverted_index, k, lda)
+        for query in final_tweets:
+            num = 1
+            for res in query:
+                print("Tweet id: " + "{" + res + "}" + " Score: " + "{" + str(num) + "}")
+                num += 1
+        """final_tweets = search_and_rank_query("queries.txt", inverted_index, 100, lda)
+        for query in final_tweets:
+            num = 1
+            for res in query:
+                print("Tweet id: " + "{" + res + "}" + " Score: " + "{" + str(num) + "}")
+                num += 1"""
 
 def run_engine():
     """
@@ -60,9 +66,11 @@ def run_engine():
     """
     number_of_documents = 0
     corpus_path = config.get__corpusPath()
+    # corpus_path = config.get__corpusPath()
     r = ReadFile(corpus_path)
     indexer = Indexer(config)
-    p = Parse()
+    # indexer = Indexer(config)
+    p = Parse(config)
 
     #reading per folder
     r.create_files_name_list()
@@ -141,7 +149,7 @@ def test(folder_list, counter, indexer, number_of_documents):
     print(counter)
     cr = datetime.now()
     print(cr)
-    p = Parse()
+    p = Parse(config)
     # Iterate over every tweet in the folder
     for idx, tweet in enumerate(folder_list):
         # parse the tweet
@@ -164,9 +172,11 @@ def load_index():
 def search_and_rank_query(queries, inverted_index, k, lda):
     print("start:", datetime.now())
 
-    config = ConfigClass()
+    # config = ConfigClass()
     indexer = Indexer(config)
+    # indexer = Indexer(config)
     to_stem = config.get__toStem()
+    # to_stem = config.get__toStem()
     queries_list = []
     if type(queries) is list:  # if queries is a list
         for query in queries:
@@ -180,7 +190,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
     query_num = 1
     tweet_id_num = 1
     for query in queries_list:
-        p = Parse()
+        p = Parse(config)
         # parse LDA query
         tokenized_query = p.parse_sentence(query, 0)
         original_query_list = query.split(" ")
@@ -258,7 +268,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                     if k == len(final_tweets):
                         break
         print("final after K", len(final_tweets))
-        #print("relevant", relevant_docs)
+        print("relevant", relevant_docs)
 
         #print("sorted_cosine_tweets", sorted_cosine_tweets)
 

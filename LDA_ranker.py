@@ -6,7 +6,6 @@ import numpy as np
 from gensim.models import LdaModel
 from configuration import ConfigClass
 
-
 class LDA_ranker:
 
     lda_model = None

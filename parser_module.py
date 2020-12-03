@@ -3,6 +3,8 @@ from math import floor
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+
+import search_engine
 from document import Document
 from configuration import ConfigClass
 from stemmer import Stemmer
@@ -13,10 +15,10 @@ class Parse:
     term_dict = {}
     capital_letter_dict = {}
     finished = False
-
-    def __init__(self):
+    def __init__(self, config):
         self.stop_words = stopwords.words('english')
-        self.to_stem = ConfigClass().get__toStem()
+        self.config = config
+        #self.to_stem = ConfigClass().get__toStem()
 
     def parse_term(self, tokenized_text, tweet_id):
         # Term Dict + Capital Letter Dict:
@@ -269,15 +271,6 @@ class Parse:
                           and x != "'re" and x != "__" and x != "_" and x != "___" and x != "," and x != "!"]"""
 ##############################################################################################
         # find punctuations
-        """new_words = []
-        for word in text_tokens:
-            word = re.sub('t.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|^http.*|^https.*|^RT$|^rt$',
-                '', word, flags=re.IGNORECASE)
-            word = ''.join([i if ord(i) < 128 else '' for i in word])
-            if word == '' or word == ' ' or len(word) == 1:
-                continue
-            new_words.append(word)
-        text_tokens = new_words"""
         new_words = []
         regex_pattern_for_num = '.*\d\.\d.*'
         regex_pattern_for_punctuation = 't.co.*|\'m|\'s|n\'t|\'re|\(|\)|\!|\-|\+|\[|\]|\{|\}|\;|\:|\'|\,|\<|\>|\?|\"|\^|\&|\*|\_|\~|\`|\||\=|\→|\/|\”|\“|\’|\—|\.|\``|\\\\|http.*|https.*|^RT$|^rt$'
@@ -326,77 +319,6 @@ class Parse:
                     if text_tokens[rmv_index + 1][0] != '@' and ((not word_val.isupper() and not word_val.islower()) or word_val.islower() or (word_val.find('_') != -1)): #TODO: delete #fuck_you
                         del text_tokens[rmv_index + 1]
                 text_tokens.remove('#')
-
-        #NUMBERS
-        """numbers = []
-        for item in text_tokens:  #([0-9]+[,.]+[0-9]+)  item.isnumeric() or item.isdigit() or item.isdecimal() or
-            if re.findall("^\d+$|^[0-9]{1,3}([,.\/][0-9]{1,3}){0,6}$", item) and not re.search('[a-zA-Z]', item): #^\d+$|^[0-9]{1,3}([,.][0-9]{1,3})?$
-                if item.find('-') == -1 and item.find('€') == -1 and item.find('£') == -1 and item.find(
-                        '%') == -1 and item.find('¢') == -1 and item.find('~') == -1 and item.find('+') == -1 and item.find('/') == -1 and item.find("'") == -1:
-                    if item.find(',') == -1:
-                        numbers.append(item)
-                    elif item.find(',') != -1 and re.findall("^([0-9]{1,3})(,[0-9]{3})*$", item):
-                        numbers.append(item)
-        if len(numbers) >0:
-            print(numbers)
-        for num in numbers:
-            occur = num.count('.')
-            if occur < 2:  # not a date
-                rmv_index = text_tokens.index(num)
-                to_append = True
-                no_text = True
-                if rmv_index + 1 < len(text_tokens):  # yes text
-                    if text_tokens[rmv_index + 1] == "million" or text_tokens[rmv_index + 1] == "Million" or \
-                            text_tokens[rmv_index + 1] == "M" or text_tokens[rmv_index + 1] == "m" or text_tokens[rmv_index + 1] == "MILLION":
-                        if len(num) < 6:
-                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
-                            new_num = self.parse_numbers(str(float(fixed_num) * 1000000))
-                        else:
-                            new_num = self.parse_numbers(num)
-                        no_text = False
-                        text_tokens[rmv_index + 1] = " "  # remove from list
-                        text_tokens[rmv_index] = " "
-                    if text_tokens[rmv_index + 1] == "billion" or text_tokens[rmv_index + 1] == "Billion" or \
-                            text_tokens[rmv_index + 1] == "B" or text_tokens[rmv_index + 1] == "b" or text_tokens[rmv_index + 1] == "BILLION":
-                        if len(num) < 9:
-                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
-                            new_num = self.parse_numbers(str(float(fixed_num) * 1000000000))
-                        else:
-                            new_num = self.parse_numbers(num)
-                        no_text = False
-                        text_tokens[rmv_index + 1] = " "  # remove from list
-                        text_tokens[rmv_index] = " "
-                    if text_tokens[rmv_index + 1] == "thousand" or text_tokens[rmv_index + 1] == "Thousand" or \
-                            text_tokens[rmv_index + 1] == "K" or text_tokens[rmv_index + 1] == "k" or text_tokens[rmv_index + 1] == "THOUSAND":
-                        if len(num) < 4:
-                            fixed_num = re.sub("[^\d\.]", "", num)  # remove comma
-                            new_num = self.parse_numbers(str(float(fixed_num) * 1000))
-                        else:
-                            new_num = self.parse_numbers(num)
-                        no_text = False
-                        text_tokens[rmv_index + 1] = " "  # remove from list
-                        text_tokens[rmv_index] = " "
-                    if not no_text:
-                        text_tokens[rmv_index + 1]
-                if (rmv_index - 1 >= 0 and text_tokens[rmv_index - 1] == '$'): #yes $
-                    if no_text:
-                        if len(num) > 3:
-                            text_tokens.append("$" + self.parse_numbers(num))
-                        else:
-                            text_tokens.append("$" + num)
-                        text_tokens[rmv_index] = " "  # remove $ from list
-                        text_tokens[rmv_index - 1] = " "
-                    else:
-                        text_tokens.append("$" + new_num)
-                        text_tokens[rmv_index-1] = " "  # remove $ from list
-                    to_append = False
-                if to_append:  # no $
-                    if no_text:
-                        if len(num) > 3:
-                            text_tokens.append(self.parse_numbers(num))
-                            text_tokens[rmv_index] = " "  # remove num from list
-                    else:
-                        text_tokens.append(new_num)"""
 ##############################################################################################
         # add fractions
         text_tokens.extend(fractions_list)
@@ -407,7 +329,8 @@ class Parse:
         # print(text_tokens_without_stopwords)
 ##############################################################################################
         # if stemmer
-        if self.to_stem:
+        to_stem = self.config.get__toStem()
+        if to_stem:
             stem_text_tokens_without_stopwords = []
             for token in text_tokens_without_stopwords:
                 stem_token = Stemmer().stem_term(token)

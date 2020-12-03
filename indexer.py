@@ -57,6 +57,8 @@ class Indexer:
         term_list_to_LDA = []
         if len(self.temp_posting_dict) < 500000 and document.doc_length != -1:
             for term in document_dictionary.keys():
+                if term == "#telanganacovidtruth":
+                    print("indexer #telanganacovidtruth")
                 try:
                     # Update posting
                     if term not in self.temp_posting_dict.keys():
@@ -173,8 +175,8 @@ class Indexer:
 
         # Change all capital letter terms in dict
         if self.finished_inverted:
-            config = ConfigClass()
-            to_stem = config.get__toStem()
+            #config = ConfigClass()
+            to_stem = self.config.get__toStem()
             for term in document.capital_letter_dict:
                 if document.capital_letter_dict[term]:  # if the term is upper is all corpus
                     if not to_stem:
