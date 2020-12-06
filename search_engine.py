@@ -17,14 +17,14 @@ from stemmer import Stemmer
 config = ConfigClass()
 def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
 #def main():
-    print("Start program")
-    # TODO: write posting into output path
+    #print("Start program")
     config.set__toStem(stemming)
     config.set__corpusPath(corpus_path)
     config.set__savedFileMainFolder(output_path)
     k = num_docs_to_retrieve
     query = queries
     empty_query = False
+    # if query is empty
     if type(query) is list:  # if queries is a list
         if len(query) == 0 or (len(query) == 1 and query[0] == ""):
             empty_query = True
@@ -66,10 +66,8 @@ def run_engine():
     """
     number_of_documents = 0
     corpus_path = config.get__corpusPath()
-    # corpus_path = config.get__corpusPath()
     r = ReadFile(corpus_path)
     indexer = Indexer(config)
-    # indexer = Indexer(config)
     p = Parse(config)
 
     #reading per folder
@@ -78,12 +76,12 @@ def run_engine():
     for file_name in r.dates_list:
         tweets_per_date = r.read_file(file_name)
         files_list.append(tweets_per_date)
-    print("files_list", len(files_list))
+    #print("files_list", len(files_list))
 
     num_of_tweets = 0
     for folder_list in files_list:
         num_of_tweets += len(folder_list)
-    print("num_of_tweets", num_of_tweets)
+    #print("num_of_tweets", num_of_tweets)
 
     """#reading per folder
     r.create_files_name_list()
@@ -107,12 +105,11 @@ def run_engine():
     print('Finished parsing and indexing. Starting to export files')"""
 
 
-    """counter = 1
+    counter = 1
     # Iterate over every folder in the DATA
     for folder_list in files_list:
-        print(counter)
-        cr = datetime.now()
-        print(cr)
+        #print(counter)
+        #print(datetime.now())
         # Iterate over every tweet in the folder
         for idx, tweet in enumerate(folder_list):
             # parse the tweet
@@ -121,13 +118,12 @@ def run_engine():
             # index the tweet data
             indexer.add_new_doc(parsed_document, num_of_tweets)
 
-        print("number of tweets", number_of_documents)
-        cn = datetime.now()
-        print(cn)
+        #print("number of tweets", number_of_documents)
+        #print(datetime.now())
         counter += 1
-    print('Finished parsing and indexing. Starting to export files')"""
+    #print('Finished parsing and indexing. Starting to export files')
 
-    #read only one folder
+    """#read only one folder
     documents_list = r.read_file(file_name='')
     num_indexed = len(documents_list)
 
@@ -138,7 +134,7 @@ def run_engine():
         number_of_documents += 1
         # index the document data
         indexer.add_new_doc(parsed_document, num_indexed)
-    print('Finished parsing and indexing. Starting to export files')
+    #print('Finished parsing and indexing. Starting to export files')"""
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.tf_idf_dict, "tf_idf_dict")
@@ -164,13 +160,13 @@ def test(folder_list, counter, indexer, number_of_documents):
     counter += 1
 
 def load_index():
-    print('Load inverted index')
+    #print('Load inverted index')
     inverted_index = utils.load_obj("inverted_idx")
     return inverted_index
 
 
 def search_and_rank_query(queries, inverted_index, k, lda):
-    print("start:", datetime.now())
+    #print("start:", datetime.now())
 
     # config = ConfigClass()
     indexer = Indexer(config)
@@ -231,15 +227,15 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         # WordNet query
         wn = WordNet_ranker(tokenized_query)
         WordNet_query = wn.extend_query()
-        print("WordNet_query", WordNet_query)
+        #print("WordNet_query", WordNet_query)
         searcher = Searcher(inverted_index)
-        print("inverted_index", len(inverted_index))
+        #print("inverted_index", len(inverted_index))
         # find relevant_docs
         relevant_docs = searcher.relevant_docs_from_posting(WordNet_query)
-        print("relevant", len(relevant_docs))
+        #print("relevant", len(relevant_docs))
         # find LDA relevant
         cosine_dict = lda.prob(tokenized_query)
-        print("cosine dict", len(cosine_dict))
+        #print("cosine dict", len(cosine_dict))
 
         dict_of_cosine_tweets = {}
         #list out keys and values separately
@@ -259,7 +255,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
         sorted_cosine_tweets = {k: v for k, v in
                                 sorted(final_dict.items(), key=lambda item: item[1], reverse=True)}
         final_tweets = list(sorted_cosine_tweets.keys())
-        print("final before add K", len(final_tweets))
+        #print("final before add K", len(final_tweets))
         if k > len(final_tweets):
             for key in relevant_docs.keys():
                 if key not in final_dict:
@@ -267,8 +263,8 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                         final_tweets.append(key)
                     if k == len(final_tweets):
                         break
-        print("final after K", len(final_tweets))
-        print("relevant", relevant_docs)
+        #print("final after K", len(final_tweets))
+        #print("relevant", relevant_docs)
 
         #print("sorted_cosine_tweets", sorted_cosine_tweets)
 
@@ -296,7 +292,7 @@ def search_and_rank_query(queries, inverted_index, k, lda):
                 fp.write(s)
         query_num += 1
         all_results.append(final_tweets)
-    print("end:", datetime.now())
+    #print("end:", datetime.now())
 
     # return top K of final_tweets
     return all_results

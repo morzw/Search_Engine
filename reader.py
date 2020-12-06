@@ -18,7 +18,7 @@ class ReadFile:
         :return: a dataframe contains tweets.
         """
         full_path = os.path.join(self.corpus_path, file_name)
-        print(full_path)
+        #print(full_path)
         #df = pd.read_parquet(full_path, engine="pyarrow")
         df = pd.read_parquet(self.corpus_path, engine="pyarrow")
         #print(df)

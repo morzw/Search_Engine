@@ -34,6 +34,7 @@ class Indexer:
         self.tf_idf_dict = {}
         self.sorted_term_dict = {}
         self.config = config
+        self.path = self.config.get__savedFileMainFolder()+"\\"
 
     def add_new_doc(self, document, num_of_tweets):
         """
@@ -57,8 +58,6 @@ class Indexer:
         term_list_to_LDA = []
         if len(self.temp_posting_dict) < 500000 and document.doc_length != -1:
             for term in document_dictionary.keys():
-                if term == "#telanganacovidtruth":
-                    print("indexer #telanganacovidtruth")
                 try:
                     # Update posting
                     if term not in self.temp_posting_dict.keys():
@@ -85,15 +84,15 @@ class Indexer:
                 self.sorted_posting_dict = collections.OrderedDict(sorted(self.copy_posting_dict.items()))
                 # empty copy_posting_dict
                 self.copy_posting_dict.clear()
-                print("*********************************************")
+                #print("*********************************************")
                 # make a txt file out of the sorted_posting_dict
-                with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
+                with open(self.path+'posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
                     for p in self.sorted_posting_dict.items():
                         for str1 in p[1]:
                             self.writen_terms += 1
                             s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
                             fp.write(s+"\n")
-                print("*********************************************")
+                #print("*********************************************")
                 # empty copy_posting_dict
                 self.sorted_posting_dict.clear()
                 self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
@@ -118,15 +117,15 @@ class Indexer:
             self.sorted_posting_dict = collections.OrderedDict(sorted(self.copy_posting_dict.items()))
             # empty copy_posting_dict
             self.copy_posting_dict.clear()
-            print("*********************************************")
+            #print("*********************************************")
             # make a txt file out of the sorted_posting_dict
-            with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
+            with open(self.path+'posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
                 for p in self.sorted_posting_dict.items():
                     for str1 in p[1]:
                         self.writen_terms += 1
                         s = p[0] + ":" + str(str1[0]) + "-" + str(str1[1]) + "-" + str(str1[2])[1:-1]
                         fp.write(s+"\n")
-            print("*********************************************")
+            #print("*********************************************")
             # empty copy_posting_dict
             self.sorted_posting_dict.clear()
             self.file_name_list.append('posting' + str(self.file_counter) + '.txt')
@@ -147,7 +146,7 @@ class Indexer:
             # sort the dict
             self.sorted_term_dict = collections.OrderedDict(sorted(document.term_dict.items()))
             # make a txt file out of the term_dict
-            with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
+            with open(self.path+'posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as fp:
                 for p in self.sorted_term_dict.items():
                     if len(p[1]) > 1:  # more then 2 tweet_id
                         for str1 in p[1]:
@@ -163,11 +162,11 @@ class Indexer:
         # merge all files to one
         if time_to_merge:
             while len(self.file_name_list) > 1:
-                print(self.file_name_list)
+                #print(self.file_name_list)
                 self.merge_sorted_files(self.file_name_list[0], self.file_name_list[1])
                 # remove all files and names
-                os.remove(self.file_name_list[1])
-                os.remove(self.file_name_list[0])
+                os.remove(self.path+self.file_name_list[1])
+                os.remove(self.path+self.file_name_list[0])
                 self.file_name_list.remove(self.file_name_list[1])
                 self.file_name_list.remove(self.file_name_list[0])
             # finished making one big posting file
@@ -236,11 +235,11 @@ class Indexer:
                 return line.strip()
 
     def merge_sorted_files(self, file1, file2):
-        print('##################################')
+        #print('##################################')
         read_file1, read_file2 = True, True
-        with open('posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as output_file:
-            with open(file1, 'r', encoding='utf-8') as input_file1:
-                with open(file2, 'r', encoding='utf-8') as input_file2:
+        with open(self.path+'posting' + str(self.file_counter) + '.txt', 'w', encoding='utf-8') as output_file:
+            with open(self.path+file1, 'r', encoding='utf-8') as input_file1:
+                with open(self.path+file2, 'r', encoding='utf-8') as input_file2:
                     while True:
                         if read_file1:
                             line1 = self.read_non_empty_line(input_file1)  # read one line, skip empty line
@@ -278,54 +277,45 @@ class Indexer:
         self.file_counter += 1
 
     def create_inverted_index(self, file_name):
-        with open(file_name, buffering=2000000, encoding='utf-8') as f:
+        with open(self.path+file_name, buffering=2000000, encoding='utf-8') as f:
             num_of_lines = 1
+            count = 1
             posting_string = []
-            if self.writen_terms < 50000000:
-                post_line = self.writen_terms / 3
-            else:
-                post_line = self.writen_terms / 5
+            post_line = self.writen_terms / 3
             for line in f:
                 posting_string.append(line)
                 split_line = line.split(":")
                 term = split_line[0]
-                tf = line.split("-")[-2]
-                """if term not in self.zipf.keys():
-                    self.zipf[term] = 0
-                    self.zipf[term] = int(tf)
-                else:
-                    self.zipf[term] += int(tf)"""
-
+                #tf = line.split("-")[-2]
                 if term not in self.inverted_idx.keys():
                     self.inverted_idx[term] = []
-                    self.inverted_idx[term].append([1, 'posting' + str(self.posting_file_num) + '.txt'])  # num of tweets, pointer
+                    self.inverted_idx[term].append([1, self.path+'posting' + str(self.posting_file_num) + '.txt'])  # num of tweets, pointer
                 else:
                     self.inverted_idx[term][0][0] += 1
                 # break the big posting file into smaller files
-                if num_of_lines == post_line:
-                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                    with open('posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
-                        for p in posting_string:
-                            fp.write(p)
-                    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                    self.posting_file_num += 1
-                    num_of_lines = 0
-                    posting_string = []
+                if num_of_lines == int(post_line):
+                    if count <= 2:
+                        #print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                        with open(self.path+'posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
+                            for p in posting_string:
+                                fp.write(p)
+                        #print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                        self.posting_file_num += 1
+                        num_of_lines = 0
+                        posting_string = []
+                        count += 1
                 num_of_lines += 1
 
             # adding the last terms to new posting file
             if len(posting_string) > 0:
-                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                with open('posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
+                #print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                with open(self.path+'posting' + str(self.posting_file_num) + '.txt', 'w', encoding='utf-8') as fp:
                     for p in posting_string:
                         fp.write(p)
-                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                #print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 self.posting_file_num += 1
         if self.file_counter > self.posting_file_num:
-            os.remove(self.file_name_list[0])
-        """with open('zipf.csv', 'w', encoding='utf-8') as fp:
-            for key in self.zipf.keys():
-                fp.write("%s,%s\n" % (key, self.zipf[key]))"""
+            os.remove(self.path+self.file_name_list[0])
         self.finished_inverted = True
 
 
